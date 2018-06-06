@@ -12,6 +12,7 @@ rm(list = ls())
 
 require(rootSolve)
 require(data.table)
+require(plotly)
 
 ###################################
 #
@@ -80,16 +81,16 @@ X_f_start <- chi_f_start * H_f
 model <- function(X, R_0_v, R_0_f, H_v, H_f, S_v, S_f, c_val, p_val) {
   # X[1] = X_f
   # X[2] = X_v
-
+  
   # convert to prevalence:
   chi_f = X[1] / H_f
   chi_v = ((1 - p_val) * X[1] + X[2]) / ((1 - p_val) * H_f + H_v)
-
+  
   equation_village <- (R_0_v * (1 - p_val) * (chi_v / (1 + S_v * c_val * chi_v))) * (H_v - X[2]) - X[2]
-
-  equation_forest <- (R_0_v * (1 - p_val) * chi_v / (1 + S_v * c_val * chi_v) + R_0_f * p_val * chi_f /
+  
+  equation_forest <- (R_0_v * (1 - p_val) * chi_v / (1 + S_v * c_val * chi_v) + R_0_f * p_val * chi_f / 
                         (1 + S_f * c_val * chi_f)) * (H_f - X[1]) - X[1]
-
+  
   return(c(equation_village, equation_forest))
 }
 
@@ -106,22 +107,22 @@ find_roots <- function(R_0_v, R_0_f,
                        S_v. = S_v, S_f. = S_f,
                        c_val = c, p_val = p,
                        chi_v_start. = chi_v_start, chi_f_start. = chi_f_start) {
-
+  
   # convert start point from prevalence to # of humans:
   X_v_start <- chi_v_start. * H_v
   X_f_start <- chi_f_start. * H_f
-
+  
   # use multiroot solver to find roots:
   ss <- multiroot(f = model, start = c(X_v_start, X_f_start),
                   R_0_v = R_0_v, R_0_f = R_0_f,
                   H_v = H_v., H_f = H_f.,
                   S_v = S_v., S_f = S_f.,
                   c_val = c_val, p_val = p_val)
-
+  
   # convert results to prevalence:
   chi_v_SS <- ss$root[1] / H_v
   chi_f_SS <- ss$root[2] / H_f
-
+  
   return(c(chi_v_SS, chi_f_SS))
 }
 
@@ -149,16 +150,14 @@ for (v in R_0_v_values) {
     # solve for roots at those R values:
     results[i, chi_v := find_roots(v, f)[1]]
     results[i, chi_f := find_roots(v, f)[2]]
-
+    
     # print progress:
     cat("R_0_v =", v, ", R_0_f =", f, " \r", file = "", sep = " ")
     flush.console()
-
+    
     i <- i + 1
   }
 }
-
-library(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
 p <- plot_ly(x = results$R_0_v,
              y = results$R_0_f,

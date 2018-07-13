@@ -8,6 +8,10 @@
 
 rm(list = ls())
 
+require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(data.table)
+require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+
 ###################################
 #
 # Set parameters
@@ -79,7 +83,13 @@ X_start <- chi_start * H
 ###################################
 
 model <- function(X, Psi, R, c_val, S_val, H) {
-  equation_matrix <- (Psi %*% (R * ((t(Psi) %*% X)/c_val*S_val*t(Psi) %*% X + t(Psi) %*% H))) * (H-X) - X
+  # equation_matrix <- (Psi %*% (R * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
+  # equation_matrix <- (Psi %*% ((t(1/Psi) %*% R) * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
+  
+  chi_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
+  
+  equation_matrix <- (Psi %*% (R * (H / (t(Psi) %*% H)) * (chi_psi/(c_val*S_val*chi_psi + 1)))) * (H-X) - X
+  # equation_matrix <- (Psi %*% (R * (chi_psi/(c_val*S_val*chi_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)
 }
@@ -107,8 +117,55 @@ find_roots <- function(R,
                   H = H.)
   
   # convert results to prevalence:
+  chi_SS <- ss$root / H
   # chi_v_SS <- ss$root[1] / H_v
   # chi_f_SS <- ss$root[2] / H_f
   
-  return(ss)
+  return(chi_SS)
 }
+
+
+
+
+# set R values to cycle through:
+R_0_v_values <- seq(0, 10, 0.1)
+R_0_f_values <- seq(0, 10, 0.1)
+
+R_values <- rbind(R_0_f_values, R_0_v_values)
+
+# create data table to store results:
+results <- data.table(R_0_v = rep(0, times = length(R_0_f_values) * length(R_0_v_values)),
+                      R_0_f = 0, chi_v = 0, chi_f = 0)
+
+i <- 1
+
+for (v in R_0_v_values) {
+  for (f in R_0_f_values) {
+    # record current R values:
+    results[i, R_0_v := v]
+    results[i, R_0_f := f]
+    # solve for roots at those R values:
+    results[i, chi_v := find_roots(c(v, f))[1]]
+    results[i, chi_f := find_roots(c(v, f))[2]]
+    
+    # print progress:
+    cat("R_0_v =", v, ", R_0_f =", f, " \r", file = "", sep = " ")
+    flush.console()
+    
+    i <- i + 1
+  }
+}
+
+p <- plot_ly(x = results$R_0_v,
+             y = results$R_0_f,
+             z = results$chi_v,
+             type = "heatmap",
+             height = 800, width = 960) %>%
+  layout(title = "Equilibrium Prevalence in Village as a Function of R_0 in Village and Forest",
+         titlefont = list(size = 16),
+         xaxis = list(title = "R_0 Value, Village",
+                      titlefont = list(size = 20)),
+         yaxis = list(title = "R_0 Value, Forest",
+                      titlefont = list(size = 20)))
+
+p

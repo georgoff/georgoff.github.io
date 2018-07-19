@@ -13,7 +13,11 @@ _Friction Surface_: A friction surface is available [here](https://georgoff.gith
 ### Defining Forests
 The forest cover raster is a binary indicator of forest within each pixel. In reality, it is very difficult to determine which parts/how much of a forest that humans are using; therefore, there are multiple ways to classify a location as "forest". A few examples:
 * Each pixel containing forest is its own "forest"
+    * This leads to the maximum number of "forests", and assumes that there is no human activity between forested pixels
 * A "forest" consists of a grouping of forested pixels wherein each forested pixel borders at least one other forested pixel
+    * This leads to very large "forests" that are assumed to be one environment for transmission (i.e. there are many interactions amongst all the humans and mosquitoes in the entire forest)
+* "Forests" are defined as groups of forested pixels within a certain proximity of a village
+    * This definition takes into account the fact that large portions of the forested areas are unused (because no one lives near them), while certain portions are used heavily and by many people (because they live near them)
 
 ### Options
 

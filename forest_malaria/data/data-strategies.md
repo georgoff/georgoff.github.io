@@ -1,5 +1,4 @@
 ## TaR Matrix Development Strategies
-#### Alec Georgoff
 
 ### Objective
 Determine how to use available data to fill out the Time-at-Risk matrix for the forest model.

@@ -8,9 +8,13 @@
 
 rm(list = ls())
 
-require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+# require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+# require(data.table)
+# require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+
+require(rootSolve)
 require(data.table)
-require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(plotly)
 
 ###################################
 #
@@ -128,8 +132,8 @@ find_roots <- function(R,
 
 
 # set R values to cycle through:
-R_0_v_values <- seq(0, 10, 0.1)
-R_0_f_values <- seq(0, 10, 0.1)
+R_0_v_values <- seq(0, 5, 0.1)
+R_0_f_values <- seq(0, 5, 0.1)
 
 R_values <- rbind(R_0_f_values, R_0_v_values)
 
@@ -156,7 +160,7 @@ for (v in R_0_v_values) {
   }
 }
 
-p <- plot_ly(x = results$R_0_v,
+heatmap <- plot_ly(x = results$R_0_v,
              y = results$R_0_f,
              z = results$chi_v,
              type = "heatmap",
@@ -168,4 +172,4 @@ p <- plot_ly(x = results$R_0_v,
          yaxis = list(title = "R_0 Value, Forest",
                       titlefont = list(size = 20)))
 
-p
+heatmap

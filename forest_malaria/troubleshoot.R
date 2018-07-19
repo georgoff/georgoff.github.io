@@ -1,4 +1,5 @@
-new_model(X = c(689.1342, 1543.3797), Psi = Psi, R = c(2,3), c_val = c, S_val = S, H = H)
+new_model(X = c(1543.3797, 689.1342), Psi = Psi, R = c(2,3), c_val = c, S_val = S, H = H)
+new_model(X = c(689, 1543), Psi = Psi, R = c(2,3), c_val = c, S_val = S, H = H)
 
 new_model(X = c(5000,2000), Psi = Psi, R = c(2,3), c_val = c, S_val = S, H = H)
 
@@ -33,8 +34,32 @@ old_model <- function(X, R_0_v, R_0_f, H_v, H_f, S_v, S_f, c_val, p_val) {
 }
 
 old_model(X = c(689.1342, 1543.3797), R_0_v = 2, R_0_f = 3, H_v = H[1], H_f = H[2], S_v = S, S_f = S, c_val = c, p_val = p)
+old_model(X = c(689, 1543), R_0_v = 2, R_0_f = 3, H_v = H[1], H_f = H[2], S_v = S, S_f = S, c_val = c, p_val = p)
 
 old_model(X = c(5000, 2000), R_0_v = 2, R_0_f = 3, H_v = H[1], H_f = H[2], S_v = S, S_f = S, c_val = c, p_val = p)
+
+# revised old model:
+old_model_2 <- function(X, R_0_v, R_0_f, H_v, H_f, S_v, S_f, c_val, p_val) {
+  # X[1] = X_f
+  # X[2] = X_v
+  
+  # convert to prevalence:
+  chi_f = X[1] / H_f
+  chi_v = ((1 - p_val) * X[1] + X[2]) / ((1 - p_val) * H_f + H_v)
+  
+  # equation_village <- (R_0_v * (1 - p_val) * (chi_v / (1 + S_v * c_val * chi_v))) * (H_v - X[2]) - X[2]
+  equation_village <- (R_0_v * (H_v / (H_v + (1-p) * H_f)) * (chi_v / (1 + S_v * c_val * chi_v))) * (H_v - X[2]) - X[2]
+  
+  equation_forest <- (R_0_v * (H_v / (H_v + (1-p) * H_f)) * (1 - p_val) * chi_v / (1 + S_v * c_val * chi_v) + R_0_f * chi_f / 
+                        (1 + S_f * c_val * chi_f)) * (H_f - X[1]) - X[1]
+  
+  return(c(equation_village, equation_forest))
+}
+
+old_model_2(X = c(689.1342, 1543.3797), R_0_v = 2, R_0_f = 3, H_v = H[1], H_f = H[2], S_v = S, S_f = S, c_val = c, p_val = p)
+
+old_model_2(X = c(5000, 2000), R_0_v = 2, R_0_f = 3, H_v = H[1], H_f = H[2], S_v = S, S_f = S, c_val = c, p_val = p)
+
 
 calculate_R <- function(V, a, b, c, g, n, H, r) {
   R = (V * a^2 * b * c * exp(-g * n)) / (H * g * r)

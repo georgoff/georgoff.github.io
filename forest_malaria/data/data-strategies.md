@@ -18,5 +18,6 @@ Method:
 * Divide sum by total number of pixels to obtain proportion of forest within polygon
 
 Results:
-<img src="https://georgoff.github.io/forest_malaria/data/forest-prop-map.png" alt="forest-prop-map" width="200px"/>
+
+<img src="https://georgoff.github.io/forest_malaria/data/forest-prop-map.png" alt="forest-prop-map" width="600px"/>
 ![forest-prop-map](https://georgoff.github.io/forest_malaria/data/forest-prop-map.png)

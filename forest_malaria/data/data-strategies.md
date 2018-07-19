@@ -8,6 +8,8 @@ _Forest Cover_: A raster of forest coverage is available [here](https://georgoff
 
 _Village Locations_: A dataset of village locations is available [here](https://georgoff.github.io/forest_malaria/data/gis_osm_places_free_1.csv). This file has latitude/longitude of each location, as well as the type of location (village, town, etc.) and the population.
 
+_Friction Surface_: A friction surface is available [here](https://georgoff.github.io/forest_malaria/data/friction_surface_2015_v1.tif). This file quantifies the travel time between any two geographical points.
+
 ### Options
 
 ##### Option #1: "Proximity Within Polygon"
@@ -20,4 +22,3 @@ Method:
 Results:
 
 <img src="https://georgoff.github.io/forest_malaria/data/forest-prop-map.png" alt="forest-prop-map" width="600px"/>
-![forest-prop-map](https://georgoff.github.io/forest_malaria/data/forest-prop-map.png)

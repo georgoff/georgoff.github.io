@@ -1,11 +1,11 @@
-library(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-library(sf, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-library(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+library(raster, lib.loc = "/home/j/temp/geospatial/packages")
+# library(sf, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+library(data.table, lib.loc = "/home/j/temp/geospatial/packages")
 
 rm(list = ls())
 
-forest_filename <- "/homes/georgoff/cambodia_hansen_any_forest_0pc_native.tif"
-locs_filename <- "/homes/georgoff/gis_osm_places_free_1.csv"
+forest_filename <- "/homes/georgoff/forest_data/cambodia_hansen_any_forest_0pc_native.tif"
+locs_filename <- "/homes/georgoff/forest_data/gis_osm_places_free_1.csv"
 
 ##############################
 # Read in data
@@ -15,6 +15,9 @@ forest_raster <- raster(forest_filename)
 forest_points <- rasterToPoints(forest_raster)
 forest_points <- as.data.table(forest_points)
 setnames(forest_points, "cambodia_hansen_any_forest_0pc_native", "forest")
+
+saveRDS(object = forest_points, file = "/homes/georgoff/forest_data/forest_points.RDS")
+
 locs <- read.csv(locs_filename, colClasses = c("NULL", "NULL", "character", "numeric", "NULL", "numeric", "numeric"))
 locs <- as.data.table(locs)
 
@@ -41,12 +44,16 @@ for(i in 1:length(village_locs$X)) {
   y_co <- village_locs$Y[i]
   
   # subset forest data that is within square of size radius:
-  forest_subset <- forest_points[x > x_co - radius &
-                                   x < x_co + radius &
-                                   y > y_co - radius &
-                                   y < y_co + radius]
+  # forest_subset <- forest_points[x > x_co - radius &
+  #                                  x < x_co + radius &
+  #                                  y > y_co - radius &
+  #                                  y < y_co + radius]
   
-  village_locs$forest_prop[i] <- mean(forest_subset$forest)
+  # village_locs$forest_prop[i] <- mean(forest_subset$forest)
+  village_locs$forest_prop[i] <- mean(forest_points$forest[x > x_co - radius &
+                                                             x < x_co + radius &
+                                                             y > y_co - radius &
+                                                             y < y_co + radius])
   
   cat("i =", i, "of ", length(village_locs$X), " \r", file = "", sep = " ")
   flush.console()
@@ -66,7 +73,11 @@ for(i in 1:length(village_locs$X)) {
 # 
 # p
 
+pdf(file = "/homes/georgoff/forest_data/forest-prop-map.pdf")
+
 p2 <- ggplot(data = village_locs, aes(x = X, y = Y)) +
   geom_point(aes(size = forest_prop))
 
 p2
+
+dev.off()

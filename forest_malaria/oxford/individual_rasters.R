@@ -23,6 +23,8 @@
 ## Required Packages
 require(gdistance, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
+rm(list = ls())
+
 # User Defined Variables - used if clipping from the global layer, if no clipping is needed, see lines 54-55 (currently commented out).
 # This could also be accomplished by importing a shapefile (for example) 
 # Geographic Coordinates (WGS84)
@@ -44,12 +46,12 @@ point.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/data/villag
 T.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.T.RDS"
 T.GC.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.T.GC.RDS"
 output.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.accessibility.tif"
+output.pdf.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/individual_travel_times.pdf"
 
 # Read in the points table
 points <- as.data.table(read.csv(file = point.filename))
-# points <- points[X_COORD > 106 & X_COORD < 108 &
-#                    Y_COORD > 13 & Y_COORD < 15]
-points <- points[X_COORD > 107.5]
+points <- points[X_COORD > 106 & X_COORD < 108 &
+                   Y_COORD > 13 & Y_COORD < 15]
 
 # Fetch the number of points
 temp <- dim(points)
@@ -61,32 +63,39 @@ fs1 <- crop(friction, extent(left, right, bottom, top))
 # Use the following line instead of the preceding 2 if clipping is not needed (i.e., to run globally), but be warned that trying this will far exceed the computational capacity available to most users.
 # fs1 <- raster(friction.surface.filename) 
 
-# Make the graph and the geocorrected version of the graph (or read in the latter).
-if (transition.matrix.exists.flag == 1) {
-  # Read in the transition matrix object if it has been pre-computed
-  T.GC <- readRDS(T.GC.filename)
-} else {
-  # Make and geocorrect the transition matrix (i.e., the graph)
-  T <- transition(fs1, function(x) 1/mean(x), 8) # RAM intensive, can be very slow for large areas
-  saveRDS(T, T.filename)
-  T.GC <- geoCorrection(T)                    
-  saveRDS(T.GC, T.GC.filename)
+pdf(output.pdf.filename)
+
+for(point in 1:nrow(points)) {
+  temp.points <- points[point]
+  # Make the graph and the geocorrected version of the graph (or read in the latter).
+  if (transition.matrix.exists.flag == 1) {
+    # Read in the transition matrix object if it has been pre-computed
+    T.GC <- readRDS(T.GC.filename)
+  } else {
+    # Make and geocorrect the transition matrix (i.e., the graph)
+    T <- transition(fs1, function(x) 1/mean(x), 8) # RAM intensive, can be very slow for large areas
+    # saveRDS(T, T.filename)
+    T.GC <- geoCorrection(T)                    
+    # saveRDS(T.GC, T.GC.filename)
+  }
+  
+  # Convert the points into a matrix
+  xy.data.frame <- data.frame()
+  xy.data.frame[1,1] <- temp.points[,1]
+  xy.data.frame[1,2] <- temp.points[,2]
+  xy.matrix <- as.matrix(xy.data.frame)
+  
+  # Run the accumulated cost algorithm to make the final output map. This can be quite slow (potentially hours).
+  temp.raster <- accCost(T.GC, xy.matrix)
+  
+  # Write the resulting raster
+  # writeRaster(temp.raster, output.filename, overwrite = TRUE)
+  
+  points_raster <- rasterToPoints(temp.raster)
+  points_raster <- as.data.table(points_raster)
+  
+  plot(temp.raster)
+  points(temp.points)
 }
 
-# Convert the points into a matrix
-xy.data.frame <- data.frame()
-xy.data.frame[1:n.points,1] <- points[,1]
-xy.data.frame[1:n.points,2] <- points[,2]
-xy.matrix <- as.matrix(xy.data.frame)
-
-# Run the accumulated cost algorithm to make the final output map. This can be quite slow (potentially hours).
-temp.raster <- accCost(T.GC, xy.matrix)
-
-# Write the resulting raster
-writeRaster(temp.raster, output.filename, overwrite = TRUE)
-
-points_raster <- rasterToPoints(temp.raster)
-points_raster <- as.data.table(points_raster)
-
-plot(temp.raster)
-points(points)
+dev.off()

@@ -142,9 +142,9 @@ subset_to_forest_coverage_level <- function(raster_directory, forest_coverage_th
 forest_coverage_threshold <- 80
 
 # create data table to store results:
-# forest_grouping <- forest_prop_points
-forest_grouping <- subset_to_forest_coverage_level(raster_directory = path,
-                                                   crop_raster = TRUE, crop_left = left, crop_right = right, crop_top = top, crop_bottom = bottom)
+forest_grouping <- forest_prop_points
+# forest_grouping <- subset_to_forest_coverage_level(raster_directory = path,
+                                                   # crop_raster = FALSE, crop_left = left, crop_right = right, crop_top = top, crop_bottom = bottom)
 forest_grouping$group <- NA
 
 locate_neighbors <- function(pixel, forest_grouping) {

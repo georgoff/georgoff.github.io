@@ -22,6 +22,7 @@
 
 ## Required Packages
 require(gdistance, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
 rm(list = ls())
 
@@ -45,7 +46,7 @@ point.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/data/villag
 # Output Files
 T.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.T.RDS"
 T.GC.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.T.GC.RDS"
-output.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.accessibility.tif"
+output.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/study.area.accessibility"
 output.pdf.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/individual_travel_times.pdf"
 
 # Read in the points table
@@ -89,13 +90,15 @@ for(point in 1:nrow(points)) {
   temp.raster <- accCost(T.GC, xy.matrix)
   
   # Write the resulting raster
-  # writeRaster(temp.raster, output.filename, overwrite = TRUE)
+  writeRaster(temp.raster, paste0(output.filename, "_", point, ".tif"), overwrite = TRUE)
   
   points_raster <- rasterToPoints(temp.raster)
   points_raster <- as.data.table(points_raster)
   
   plot(temp.raster)
   points(temp.points)
+  
+  cat(point, "\n")
 }
 
 dev.off()

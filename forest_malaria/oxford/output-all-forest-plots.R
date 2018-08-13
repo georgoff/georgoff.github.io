@@ -48,6 +48,9 @@ sum_forest_types <- function(raster_directory, year_to_use = 2013, plot_results 
                              crop_rasters = FALSE, crop_left = NULL, crop_right = NULL, crop_top = NULL, crop_bottom = NULL,
                              save_all_rasters_as_RDS = FALSE, all_rasters_RDS_filepath = NULL,
                              save_all_rasters_as_PDF = FALSE, all_rasters_PDF_filepath = NULL) {
+  
+  require(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  
   files <- list.files(raster_directory)
   
   num_files <- length(files)
@@ -96,7 +99,7 @@ sum_forest_types <- function(raster_directory, year_to_use = 2013, plot_results 
 
 ########################################################################
 #
-# Create raster of entire area subsetted to >80% forest coverage
+# Create raster of entire area subset to > 80% forest coverage
 #
 ########################################################################
 
@@ -105,9 +108,10 @@ subset_to_forest_coverage_level <- function(raster_directory, forest_coverage_th
                                             year_to_use = 2013,
                                             save_as_PDF = FALSE, PDF_filename = NULL, ...) {
   
-  library(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
   
-  forest_prop_raster <- sum_forest_types(raster_directory, year_to_use, plot_results = FALSE, ...)
+  forest_prop_raster <- sum_forest_types(raster_directory = raster_directory, year_to_use = year_to_use, plot_results = FALSE, ...)
   
   forest_prop_points <- rasterToPoints(forest_prop_raster)
   forest_prop_points <- as.data.table(forest_prop_points)
@@ -139,12 +143,13 @@ subset_to_forest_coverage_level <- function(raster_directory, forest_coverage_th
 #
 ########################################################################
 
-forest_coverage_threshold <- 80
+forest_coverage_threshold <- 60
 
-# create data table to store results:
-forest_grouping <- forest_prop_points
-# forest_grouping <- subset_to_forest_coverage_level(raster_directory = path,
-                                                   # crop_raster = FALSE, crop_left = left, crop_right = right, crop_top = top, crop_bottom = bottom)
+forest_grouping <- sum_forest_types(raster_directory = path,
+                                                   crop_rasters = TRUE, crop_left = left, crop_right = right, crop_top = top, crop_bottom = bottom)
+forest_grouping <- rasterToPoints(forest_grouping)
+forest_grouping <- as.data.table(forest_grouping)
+
 forest_grouping$group <- NA
 
 locate_neighbors <- function(pixel, forest_grouping) {
@@ -260,15 +265,32 @@ for (pixel in 1:nrow(forest_grouping)) {
   }
 }
 
+require(rgdal, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(ggmap, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
-# forest_grouping_2 <- search(1, forest_grouping)
-# forest_grouping_2 <- mark_neighbors(start_pixel = 97, search_group = 1, forest_grouping = forest_grouping)
+shp <- readOGR("/homes/georgoff/forest_data/Shapefiles/Shapefiles/KHM_Ad0.shp")
 
-p <- ggplot(data = forest_prop_points[layer > forest_coverage_threshold], aes(x = x, y = y)) +
-  geom_raster(aes(fill = layer)) +
-  scale_fill_gradientn(colours=c("white", "green")) +
+shp_df <- fortify(shp)
+shp_df <- as.data.table(shp_df)
+shp_cropped <- shp_df[long > left & long < right & lat > bottom & lat < top]
+shp_cropped[long == min(long) | long == max(long) | lat == min(lat) | lat == max(lat), order := NA]
+
+for (i in 1:(nrow(shp_cropped)-1)) {
+  if (shp_cropped$order[i] != shp_cropped$order[i+1] - 1) {
+    shp_cropped$lat[i] <- NA
+  }
+}
+
+p <- ggplot(data = forest_grouping[layer > forest_coverage_threshold], aes(x = x, y = y)) +
+  # geom_raster(aes(fill = layer)) +
+  # scale_fill_gradientn(colours=c("white", "gray")) +
   ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
   geom_point(data = forest_grouping[!is.na(forest_grouping$group)],
-             aes(colour = group))
+             aes(colour = factor(group))) +
+  geom_path(data = shp_cropped, aes(x = long, y = lat, group = group), color = "yellow", na.rm = FALSE) +
+  # theme_void() +
+  # theme_classic() +
+  theme_dark() +
+  theme(legend.position = "none")
 
 p

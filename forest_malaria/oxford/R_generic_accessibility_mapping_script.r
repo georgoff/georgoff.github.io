@@ -49,7 +49,7 @@ output.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/oxford/stu
 points <- as.data.table(read.csv(file = point.filename))
 # points <- points[X_COORD > 106 & X_COORD < 108 &
 #                    Y_COORD > 13 & Y_COORD < 15]
-points <- points[X_COORD > 107.5]
+# points <- points[X_COORD > 107.5]
 
 # Fetch the number of points
 temp <- dim(points)

@@ -161,10 +161,11 @@ subset_to_forest_coverage_level <- function(data_directory, forest_coverage_thre
 #
 ########################################################################
 
-forest_map(data_directory = data_directory, forest_coverage_threshold = 90)
+forest_map(data_directory = data_directory, forest_coverage_threshold = 90, country_borders = TRUE, countries_to_use = c("Cambodia", "Lao"),
+           crop = TRUE, crop_limits = crop_limits)
 
 forest_map <- function(data_directory, forest_coverage_threshold, year_to_use = 2013, crop = FALSE,
-                       crop_limits = NULL) {
+                       crop_limits = NULL, country_borders = FALSE, countries_to_use = NULL) {
   
   require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
   require(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
@@ -190,24 +191,24 @@ forest_map <- function(data_directory, forest_coverage_threshold, year_to_use = 
   }
   
   # shp <- readOGR("/homes/georgoff/forest_data/Shapefiles/Shapefiles/KHM_Ad0.shp")
-  shp <- readOGR("/homes/georgoff/forest_data/AdminShapefiles/AdminShapefiles/Vietnam_Ad0.shp")
-  
-  shp_df <- fortify(shp)
-  shp_df <- as.data.table(shp_df)
-  shp_cropped <- shp_df[long > left & long < right & lat > bottom & lat < top]
-  # shp_cropped[long == min(long) | long == max(long) | lat == min(lat) | lat == max(lat), order := NA]
-  
-  shp2 <- readOGR("/homes/georgoff/forest_data/AdminShapefiles/AdminShapefiles/Cambodia_Ad0.shp")
-  
-  shp2_df <- fortify(shp2)
-  shp2_df <- as.data.table(shp2_df)
-  shp2_cropped <- shp2_df[long > left & long < right & lat > bottom & lat < top]
-  
-  for (i in 1:(nrow(shp_cropped)-1)) {
-    if (shp_cropped$order[i] != shp_cropped$order[i+1] - 1) {
-      shp_cropped$lat[i] <- NA
-    }
-  }
+  # shp <- readOGR("/homes/georgoff/forest_data/AdminShapefiles/AdminShapefiles/Vietnam_Ad0.shp")
+  # 
+  # shp_df <- fortify(shp)
+  # shp_df <- as.data.table(shp_df)
+  # shp_cropped <- shp_df[long > left & long < right & lat > bottom & lat < top]
+  # # shp_cropped[long == min(long) | long == max(long) | lat == min(lat) | lat == max(lat), order := NA]
+  # 
+  # shp2 <- readOGR("/homes/georgoff/forest_data/AdminShapefiles/AdminShapefiles/Cambodia_Ad0.shp")
+  # 
+  # shp2_df <- fortify(shp2)
+  # shp2_df <- as.data.table(shp2_df)
+  # shp2_cropped <- shp2_df[long > left & long < right & lat > bottom & lat < top]
+  # 
+  # for (i in 1:(nrow(shp_cropped)-1)) {
+  #   if (shp_cropped$order[i] != shp_cropped$order[i+1] - 1) {
+  #     shp_cropped$lat[i] <- NA
+  #   }
+  # }
   
   p <- ggplot(data = forest_grouping[layer > forest_coverage_threshold], aes(x = x, y = y)) +
     # geom_raster(aes(fill = layer)) +
@@ -216,14 +217,23 @@ forest_map <- function(data_directory, forest_coverage_threshold, year_to_use = 
     xlab("Longitude") +
     ylab("Latitude") +
     geom_point(data = forest_grouping[!is.na(forest_grouping$group)],
-               aes(colour = factor(group))) +
-    geom_path(data = shp_cropped, aes(x = long, y = lat, group = group), color = "yellow", na.rm = FALSE) +
-    geom_path(data = shp2_cropped, aes(x = long, y = lat, group = group), color = "white", na.rm = FALSE) +
+               aes(colour = factor(group)))
+    # geom_path(data = shp_cropped, aes(x = long, y = lat, group = group), color = "yellow", na.rm = FALSE) +
+    # geom_path(data = shp2_cropped, aes(x = long, y = lat, group = group), color = "white", na.rm = FALSE) +
     # geom_point(data = village_locs, aes(x = X, y = Y), color = "white") +
     # theme_void() +
     # theme_classic() +
-    theme_dark() +
-    theme(legend.position = "none")
+
+  
+  if (country_borders) {
+    shp_tables <- compile_shp_files(shp_directory = paste0(data_directory, "AdminShapefiles/"), countries_to_use = countries_to_use)
+    
+    for (i in 1:length(shp_tables)) {
+      p <- p + geom_path(data = shp_tables[[i]], aes(x = long, y = lat, group = group), color = "white", na.rm = FALSE)
+    }
+  }
+
+  p <- p + theme_dark() + theme(legend.position = "none")
   
   print(p)
 }
@@ -346,7 +356,7 @@ compile_shp_files <- function(shp_directory, countries_to_use) {
   
   for (count in 1:length(countries_to_use)) {
     shp <- as.data.table(fortify(readOGR(paste0(shp_directory, countries_to_use[count], "_Ad0.shp"))))
-    list_of_shp_points[count] <- shp
+    list_of_shp_points[[count]] <- shp
   }
   
   # for (i in 1:(nrow(compiled_shp_files)-1)) {
@@ -359,6 +369,6 @@ compile_shp_files <- function(shp_directory, countries_to_use) {
 }
 
 
-
+# need to add crop limits to shp file function
 
 

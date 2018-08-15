@@ -316,26 +316,38 @@ compile_shp_files <- function(shp_directory, countries_to_use, crop = FALSE, cro
   colnames(df) <- x
   compiled_shp_files <- as.data.table(df)
   list_of_shp_points <- list(compiled_shp_files)
+  list_index <- 1
   
   for (count in 1:length(countries_to_use)) {
-    shp <- as.data.table(fortify(readOGR(paste0(shp_directory, countries_to_use[count], "_Ad0.shp"))))
+    shp <- as.data.table(fortify(readOGR(paste0(shp_directory, countries_to_use[count], "_Ad0.shp"), verbose = FALSE)))
+    # cat("shp now contains ", countries_to_use[count], "\n")
     if (crop) {
       shp <- shp[long > crop_limits[1] & long < crop_limits[2] & lat > crop_limits[3] & lat < crop_limits[4]]
+      # cat("we have now cropped shp. its new length is ", nrow(shp), "\n")
     }
 
     if (nrow(shp) > 0) {
-      list_of_shp_points[[count]] <- shp
+      list_of_shp_points[[list_index]] <- shp
+      list_index <- list_index + 1
     }
 
   }
   
   for (country in 1:length(list_of_shp_points)) {
-    for (i in 1:(nrow(list_of_shp_points[[country]])-1)) {
-      if (list_of_shp_points[[country]]$order[i] != list_of_shp_points[[country]]$order[i+1] - 1) {
-        list_of_shp_points[[country]]$lat[i] <- NA
+    # cat("I'm working on ", list_of_shp_points, ". Its length is ", nrow(list_of_shp_points[[country]]))
+    # if (nrow(list_of_shp_points[[country]]) > 1) {
+    #   for (i in 1:(nrow(list_of_shp_points[[country]])-1)) {
+    #     if (list_of_shp_points[[country]]$order[i] != list_of_shp_points[[country]]$order[i+1] - 1) {
+    #       list_of_shp_points[[country]]$lat[i] <- NA
+    #     }
+    #   }
+      
+      for (i in 1:(nrow(list_of_shp_points[[country]])-1)) {
+        if (list_of_shp_points[[country]]$order[i] != list_of_shp_points[[country]]$order[i+1] - 1) {
+          list_of_shp_points[[country]]$lat[i] <- NA
+        }
       }
     }
-  }
   
   return(list_of_shp_points)
 }

@@ -7,6 +7,8 @@
 #          obtained from Oxford
 ########################################################################
 
+rm(list = ls())
+
 ########################################################################
 #
 # README
@@ -26,7 +28,8 @@ data_directory <- "/homes/georgoff/forest_data/forest_function_files/"
 # TODO: add compatibility for non-cluster R sessions
 
 # 3) Source the forest utilities file:
-source(paste0(data_directory), forest-utilities.R)
+# source(paste0(data_directory, "forest-utilities.R"))
+source("/homes/georgoff/georgoff.github.io/forest_malaria/oxford/forest-utilities.R")
 
 ########################################################################
 #
@@ -35,13 +38,15 @@ source(paste0(data_directory), forest-utilities.R)
 ########################################################################
 
 # Set your forest coverage threshold, as a percentage:
-forest_coverage_threshold <- 90
+forest_coverage_threshold <- 80
 
 # Pick a year of satellite data to use. Default is 2013, which is the latest
 # available year. 2001 is the earliest:
 year_to_use <- 2013
 
-# Indicate if you'd like to crop the map to a certain area:
+# Indicate if you'd like to crop the map to a certain area. Note that data
+# availability is limited to the following crop limits :[102,108,9,15]
+# therefore, cropping is recommended: 
 crop <- TRUE
 
 # If cropping, set the crop limits in terms of latitude and longitude. The

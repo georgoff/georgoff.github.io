@@ -16,7 +16,9 @@ load_required_packages <- function(ihme_cluster) {
   }
   
   if (!ihme_cluster) {
-    install.packages(c("raster", "ggplot2", "data.table", "rgdal"))
+    list.of.packages <- c("raster", "ggplot2", "data.table", "rgdal")
+    new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+    if(length(new.packages)) install.packages(new.packages)
     
     library(raster)
     library(ggplot2)

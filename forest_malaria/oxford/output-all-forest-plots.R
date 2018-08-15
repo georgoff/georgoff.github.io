@@ -1,16 +1,21 @@
-files <- list.files("/homes/georgoff/forest_data/ForestMalariaData/ForestRasterData/")
-
-num_files <- length(files)
-
 # left, right, bottom, top
 crop_limits <- c(102,108,9,15)
 
-left <- 102
-right <- 108
-top <- 15
-bottom <- 9
-
 data_directory <- "/homes/georgoff/forest_data/forest_function_files/"
+
+########################################################################
+#
+# Install necessary packages
+#
+########################################################################
+
+load_required_packages <- function() {
+  library(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  library(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  library(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  library(rgdal, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+  library(ggmap, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+}
 
 ########################################################################
 #
@@ -48,8 +53,6 @@ plot_all_rasters <- function(data_directory, print_to_pdf = FALSE, pdf_filepath 
 
 }
 
-
-
 ########################################################################
 #
 # Add up proportions of all forest cover types in every cell
@@ -62,8 +65,6 @@ sum_forest_types <- function(data_directory, year_to_use = 2013, plot_results = 
                              save_all_rasters_as_PDF = FALSE, all_rasters_PDF_filepath = NULL) {
   
   # crop_limits = [left, right, bottom, top]
-  
-  require(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
   
   raster_directory <- paste0(data_directory, "ForestRasterData/")
   
@@ -111,21 +112,16 @@ sum_forest_types <- function(data_directory, year_to_use = 2013, plot_results = 
   return(all_rasters)
 }
 
-
-
 ########################################################################
 #
-# Create raster of entire area subset to > 80% forest coverage
+# Create raster of entire area subset to forest coverage threshold
 #
 ########################################################################
 
-subset_to_forest_coverage_level <- function(data_directory, forest_coverage_threshold = 80,
+subset_to_forest_coverage_level <- function(data_directory, forest_coverage_threshold,
                                             plot_results = FALSE,
                                             year_to_use = 2013,
                                             save_as_PDF = FALSE, PDF_filename = NULL, ...) {
-  
-  require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
   
   raster_directory <- paste0(data_directory, "ForestRasterData/")
   
@@ -161,16 +157,13 @@ subset_to_forest_coverage_level <- function(data_directory, forest_coverage_thre
 #
 ########################################################################
 
-forest_map(data_directory = data_directory, forest_coverage_threshold = 90, country_borders = TRUE, countries_to_use = c("Cambodia", "Lao"),
+forest_map(data_directory = data_directory, forest_coverage_threshold = 75, country_borders = TRUE,
+           countries_to_use = c("Cambodia", "Lao", "Vietnam", "Thailand", "Myanmar"),
            crop = TRUE, crop_limits = crop_limits)
 
-forest_map <- function(data_directory, forest_coverage_threshold, year_to_use = 2013, crop = FALSE,
-                       crop_limits = NULL, country_borders = FALSE, countries_to_use = NULL) {
-  
-  require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(rgdal, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(ggmap, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+forest_map <- function(data_directory, forest_coverage_threshold, year_to_use = 2013,
+                       crop = FALSE, crop_limits = NULL,
+                       country_borders = FALSE, countries_to_use = NULL) {
   
   forest_grouping <- sum_forest_types(data_directory = data_directory, year_to_use = year_to_use,
                                       crop_rasters = crop, crop_limits = crop_limits)
@@ -186,59 +179,36 @@ forest_map <- function(data_directory, forest_coverage_threshold, year_to_use = 
       # new group found
       search_group <- search_group + 1
       forest_grouping$group[pixel] <- search_group
-      forest_grouping <- mark_neighbors(start_pixel = pixel, search_group = search_group, forest_grouping = forest_grouping)
+      forest_grouping <- mark_neighbors(start_pixel = pixel, search_group = search_group, forest_grouping = forest_grouping,
+                                        forest_coverage_threshold = forest_coverage_threshold)
     }
   }
   
-  # shp <- readOGR("/homes/georgoff/forest_data/Shapefiles/Shapefiles/KHM_Ad0.shp")
-  # shp <- readOGR("/homes/georgoff/forest_data/AdminShapefiles/AdminShapefiles/Vietnam_Ad0.shp")
-  # 
-  # shp_df <- fortify(shp)
-  # shp_df <- as.data.table(shp_df)
-  # shp_cropped <- shp_df[long > left & long < right & lat > bottom & lat < top]
-  # # shp_cropped[long == min(long) | long == max(long) | lat == min(lat) | lat == max(lat), order := NA]
-  # 
-  # shp2 <- readOGR("/homes/georgoff/forest_data/AdminShapefiles/AdminShapefiles/Cambodia_Ad0.shp")
-  # 
-  # shp2_df <- fortify(shp2)
-  # shp2_df <- as.data.table(shp2_df)
-  # shp2_cropped <- shp2_df[long > left & long < right & lat > bottom & lat < top]
-  # 
-  # for (i in 1:(nrow(shp_cropped)-1)) {
-  #   if (shp_cropped$order[i] != shp_cropped$order[i+1] - 1) {
-  #     shp_cropped$lat[i] <- NA
-  #   }
-  # }
-  
   p <- ggplot(data = forest_grouping[layer > forest_coverage_threshold], aes(x = x, y = y)) +
+    # TODO: add option for displaying coverage percentage and picking color
     # geom_raster(aes(fill = layer)) +
-    # scale_fill_gradientn(colours=c("white", "gray")) +
+    # scale_fill_gradientn(colours=c("white", "green")) +
     ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
     xlab("Longitude") +
     ylab("Latitude") +
     geom_point(data = forest_grouping[!is.na(forest_grouping$group)],
                aes(colour = factor(group)))
-    # geom_path(data = shp_cropped, aes(x = long, y = lat, group = group), color = "yellow", na.rm = FALSE) +
-    # geom_path(data = shp2_cropped, aes(x = long, y = lat, group = group), color = "white", na.rm = FALSE) +
-    # geom_point(data = village_locs, aes(x = X, y = Y), color = "white") +
-    # theme_void() +
-    # theme_classic() +
 
   
   if (country_borders) {
-    shp_tables <- compile_shp_files(shp_directory = paste0(data_directory, "AdminShapefiles/"), countries_to_use = countries_to_use)
+    shp_tables <- compile_shp_files(shp_directory = paste0(data_directory, "AdminShapefiles/"), countries_to_use = countries_to_use, crop = crop,
+                                    crop_limits = crop_limits)
     
     for (i in 1:length(shp_tables)) {
       p <- p + geom_path(data = shp_tables[[i]], aes(x = long, y = lat, group = group), color = "white", na.rm = FALSE)
     }
   }
 
+  # TODO: add option for picking theme
   p <- p + theme_dark() + theme(legend.position = "none")
   
   print(p)
 }
-
-
 
 locate_neighbors <- function(pixel, forest_grouping) {
   # returns vector of indices of neighboring pixels, including edge cases
@@ -325,7 +295,7 @@ locate_neighbors <- function(pixel, forest_grouping) {
   }
 }
 
-mark_neighbors <- function(start_pixel, search_group, forest_grouping) {
+mark_neighbors <- function(start_pixel, search_group, forest_grouping, forest_coverage_threshold) {
   # cat("i am starting at pixel ", start_pixel, "\n")
   
   neighbors <- locate_neighbors(start_pixel, forest_grouping)
@@ -336,39 +306,39 @@ mark_neighbors <- function(start_pixel, search_group, forest_grouping) {
   forest_grouping$group[neighbors] <- search_group
   
   for (new_pixel in neighbors) {
-    forest_grouping <- mark_neighbors(start_pixel = new_pixel, search_group = search_group, forest_grouping = forest_grouping)
+    forest_grouping <- mark_neighbors(start_pixel = new_pixel, search_group = search_group, forest_grouping = forest_grouping,
+                                      forest_coverage_threshold = forest_coverage_threshold)
   }
   
   return(forest_grouping)
 }
 
-compile_shp_files <- function(shp_directory, countries_to_use) {
+compile_shp_files <- function(shp_directory, countries_to_use, crop = FALSE, crop_limits = NULL) {
   df <- data.frame(matrix(ncol = 7, nrow = 0))
   x <- c("long", "lat", "order", "hole", "piece", "id", "group")
   colnames(df) <- x
   compiled_shp_files <- as.data.table(df)
   list_of_shp_points <- list(compiled_shp_files)
   
-  # for (country in countries_to_use) {
-  #   shp <- as.data.table(fortify(readOGR(paste0(shp_directory, country, "_Ad0.shp"))))
-  #   compiled_shp_files <- rbindlist(list(compiled_shp_files, shp))
-  # }
-  
   for (count in 1:length(countries_to_use)) {
     shp <- as.data.table(fortify(readOGR(paste0(shp_directory, countries_to_use[count], "_Ad0.shp"))))
-    list_of_shp_points[[count]] <- shp
+    if (crop) {
+      shp <- shp[long > crop_limits[1] & long < crop_limits[2] & lat > crop_limits[3] & lat < crop_limits[4]]
+    }
+
+    if (nrow(shp) > 0) {
+      list_of_shp_points[[count]] <- shp
+    }
+
   }
   
-  # for (i in 1:(nrow(compiled_shp_files)-1)) {
-  #   if (compiled_shp_files$order[i] != compiled_shp_files$order[i+1] - 1) {
-  #     compiled_shp_files$lat[i] <- NA
-  #   }
-  # }
+  for (country in 1:length(list_of_shp_points)) {
+    for (i in 1:(nrow(list_of_shp_points[[country]])-1)) {
+      if (list_of_shp_points[[country]]$order[i] != list_of_shp_points[[country]]$order[i+1] - 1) {
+        list_of_shp_points[[country]]$lat[i] <- NA
+      }
+    }
+  }
   
   return(list_of_shp_points)
 }
-
-
-# need to add crop limits to shp file function
-
-

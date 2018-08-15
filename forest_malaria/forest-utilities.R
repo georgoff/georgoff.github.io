@@ -13,17 +13,15 @@ load_required_packages <- function(ihme_cluster) {
     library(ggplot2, lib.loc = cluster_lib_loc)
     library(data.table, lib.loc = cluster_lib_loc)
     library(rgdal, lib.loc = cluster_lib_loc)
-    library(ggmap, lib.loc = cluster_lib_loc)
   }
   
   if (!ihme_cluster) {
-    install.packages(c("raster", "ggplot2", "data.table", "rgdal", "ggmap"))
+    install.packages(c("raster", "ggplot2", "data.table", "rgdal"))
     
     library(raster)
     library(ggplot2)
     library(data.table)
-    library(rdgal)
-    library(ggmap)
+    library(rgdal)
   }
   
 }

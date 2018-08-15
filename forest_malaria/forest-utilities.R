@@ -4,15 +4,29 @@
 #
 ########################################################################
 
-load_required_packages <- function() {
-  library(raster, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  library(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  library(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  library(rgdal, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  library(ggmap, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+load_required_packages <- function(ihme_cluster) {
+  
+  if (ihme_cluster) {
+    cluster_lib_loc <- "/snfs1/temp/georgoff/Rlibs/"
+    
+    library(raster, lib.loc = cluster_lib_loc)
+    library(ggplot2, lib.loc = cluster_lib_loc)
+    library(data.table, lib.loc = cluster_lib_loc)
+    library(rgdal, lib.loc = cluster_lib_loc)
+    library(ggmap, lib.loc = cluster_lib_loc)
+  }
+  
+  if (!ihme_cluster) {
+    install.packages(c("raster", "ggplot2", "data.table", "rgdal", "ggmap"))
+    
+    library(raster)
+    library(ggplot2)
+    library(data.table)
+    library(rdgal)
+    library(ggmap)
+  }
+  
 }
-
-load_required_packages()
 
 ########################################################################
 #

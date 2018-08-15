@@ -23,13 +23,15 @@ rm(list = ls())
 # 2) Set the data_directory variable to point to your downloaded files:
 data_directory <- "/homes/georgoff/forest_data/forest_function_files/"
 
-# TODO: add forest-utilities.R to zip file
-
-# TODO: add compatibility for non-cluster R sessions
-
 # 3) Source the forest utilities file:
 # source(paste0(data_directory, "forest-utilities.R"))
-source("/homes/georgoff/georgoff.github.io/forest_malaria/oxford/forest-utilities.R")
+source("/homes/georgoff/georgoff.github.io/forest_malaria/forest-utilities.R")
+
+# 4) Install the necessary packages. Indicate whether you are running R
+#    on IHME's cluster (with access to cluster drives) or if you are
+#    running locally/elsewhere:
+on_the_cluster <- TRUE
+load_required_packages(ihme_cluster = on_the_cluster)
 
 ########################################################################
 #

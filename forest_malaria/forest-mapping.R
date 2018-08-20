@@ -39,7 +39,7 @@ load_required_packages(ihme_cluster = on_the_cluster)
 ########################################################################
 
 # Set your forest coverage threshold, as a percentage:
-forest_coverage_threshold <- 80
+forest_coverage_threshold <- 60
 
 # Pick a year of satellite data to use. Default is 2013, which is the latest
 # available year. 2001 is the earliest:
@@ -52,7 +52,7 @@ crop <- TRUE
 
 # If cropping, set the crop limits in terms of latitude and longitude. The
 # format is as follows: [left, right, bottom, top]
-crop_limits <- c(102,108,9,15)
+crop_limits <- c(105.75,106,11.5,11.75)
 
 # Indicate if you'd like to include the country borders in your map:
 country_borders <- TRUE

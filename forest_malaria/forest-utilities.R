@@ -14,12 +14,14 @@ load_required_packages <- function(ihme_cluster) {
     library(ggplot2, lib.loc = cluster_lib_loc)
     library(data.table, lib.loc = cluster_lib_loc)
     library(rgdal, lib.loc = cluster_lib_loc)
+    library(ggforce, lib.loc = cluster_lib_loc)
+    library(gdistance, lib.loc = cluster_lib_loc)
   }
   
   if (!ihme_cluster) {
     # if not on the cluster, check if packages are installed and install
     # those that aren't
-    list.of.packages <- c("raster", "ggplot2", "data.table", "rgdal")
+    list.of.packages <- c("raster", "ggplot2", "data.table", "rgdal", "ggforce", "gdistance")
     new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
     if(length(new.packages)) install.packages(new.packages)
     
@@ -27,6 +29,8 @@ load_required_packages <- function(ihme_cluster) {
     library(ggplot2)
     library(data.table)
     library(rgdal)
+    library(ggforce)
+    library(gdistance)
   }
   
 }
@@ -191,10 +195,10 @@ subset_to_forest_coverage_level <- function(data_directory, forest_coverage_thre
 
 # use this command for testing the function:
 
-test <- forest_map(data_directory = data_directory, forest_coverage_threshold = 60, country_borders = TRUE,
-           countries_to_use = c("Cambodia", "Lao", "Vietnam", "Thailand", "Myanmar"),
-           crop = TRUE, crop_limits = crop_limits,
-           include_locs = TRUE, locs_filename = paste0(data_directory, "gis_osm_places_free_1.csv"), place_types = c("village"))
+# test <- forest_map(data_directory = data_directory, forest_coverage_threshold = 60, country_borders = TRUE,
+#            countries_to_use = c("Cambodia", "Lao", "Vietnam", "Thailand", "Myanmar"),
+#            crop = TRUE, crop_limits = crop_limits,
+#            include_locs = TRUE, locs_filename = paste0(data_directory, "gis_osm_places_free_1.csv"), place_types = c("village"))
 
 
 
@@ -418,291 +422,211 @@ compile_shp_files <- function(shp_directory, countries_to_use, crop = FALSE, cro
 #
 ########################################################################
 
-library(ggforce, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+test <- assign_villages_to_forests(data_directory = "/homes/georgoff/forest_data/forest_function_files/", forest_coverage_threshold = 90,
+                                   village_points_filename = "/homes/georgoff/georgoff.github.io/forest_malaria/data/village_points.csv",
+                                   friction_surface_filename = "/homes/georgoff/forest_data/friction_surface_2015_v1.tif",
+                                   crop = TRUE, crop_limits = c(106,108,13,15))
 
-# make sure to assign a "home forest" to each village
-# include "backup" forests?
-# for each forest, display the villages that use it (that consider it their "home forest")
-
-# crop_limits <- c(105.8, 106, 11.5, 11.8)
-# crop_limits <- c(105, 106, 11, 12)
-crop_limits <- c(106.5, 107.5, 13.5, 14.15)
-# crop_limits <- c(106.5, 107.5, 11.5, 13)
-
-# crop_limits <- c(102, 108, 9, 15)
-
-test <- forest_map(data_directory = data_directory, forest_coverage_threshold = 90, country_borders = TRUE,
-                   countries_to_use = c("Cambodia", "Lao", "Vietnam", "Thailand", "Myanmar"),
-                   crop = TRUE, crop_limits = crop_limits,
-                   include_locs = TRUE, locs_filename = paste0(data_directory, "gis_osm_places_free_1.csv"), place_types = c("village"))
-
-forest_pixels <- test[!is.na(group)]
-
-# import the friction surface:
-require(gdistance, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-friction.surface.filename <- "/homes/georgoff/forest_data/friction_surface_2015_v1.tif"
-point.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/data/village_points.csv" # Just 2 columns.  Structured as [X_COORD, Y_COORD] aka [LONG, LAT].  Use a header.
-
-# Read in the points table
-points <- as.data.table(read.csv(file = point.filename))
-points <- points[X_COORD > crop_limits[1] & X_COORD < crop_limits[2] &
-                   Y_COORD > crop_limits[3] & Y_COORD < crop_limits[4]]
-
-# Fetch the number of points
-temp <- dim(points)
-n.points <- temp[1]
-
-#  Define the spatial template
-friction <- raster(friction.surface.filename)
-fs1 <- crop(friction, extent(crop_limits[1], crop_limits[2], crop_limits[3], crop_limits[4]))
-fs1_points <- as.data.table(rasterToPoints(fs1))
-
-# Make and geocorrect the transition matrix (i.e., the graph)
-cat("STEP A \n")
-T <- transition(fs1, function(x) 1/mean(x), 8) # RAM intensive, can be very slow for large areas
-# saveRDS(T, T.filename)
-cat("STEP B \n")
-T.GC <- geoCorrection(T)                    
-# saveRDS(T.GC, T.GC.filename)
-
-pdf("/homes/georgoff/temp/boii.pdf")
-
-points$forest_x <- NA
-points$forest_y <- NA
-points$forest_group <- NA
-points$travel_time <- NA
-
-# for(point in 1) {
-for(point in 1) {
+assign_villages_to_forests <- function(data_directory, forest_coverage_threshold,
+                                       village_points_filename, friction_surface_filename,
+                                       crop = TRUE, crop_limits = c(102,108,9,15),
+                                       country_borders = FALSE, countries_to_use = NULL) {
   
-  cat("STEP 1 \n")
+  forest_pixels <- forest_map(data_directory = data_directory, forest_coverage_threshold = forest_coverage_threshold,
+                              country_borders = country_borders, countries_to_use = countries_to_use,
+                              crop = crop, crop_limits = crop_limits)
   
-  temp.points <- points[point]
-
-
+  forest_pixels <- forest_pixels[!is.na(group)]
   
-  # Convert the points into a matrix
-  cat("STEP 2 \n")
-  xy.data.frame <- data.frame()
-  xy.data.frame[1,1] <- temp.points[,1]
-  xy.data.frame[1,2] <- temp.points[,2]
-  xy.matrix <- as.matrix(xy.data.frame)
+  # import the friction surface:
+  # friction.surface.filename <- "/homes/georgoff/forest_data/friction_surface_2015_v1.tif"
   
-  # Run the accumulated cost algorithm to make the final output map. This can be quite slow (potentially hours).
-  cat("STEP 3 \n")
-  temp.raster <- accCost(T.GC, xy.matrix)
+  # specify file that contains village coordinates:
+  # Just 2 columns.  Structured as [X_COORD, Y_COORD] aka [LONG, LAT].  Use a header.
+  # point.filename <- "/homes/georgoff/georgoff.github.io/forest_malaria/data/village_points.csv"
   
-  # Write the resulting raster
-  # writeRaster(temp.raster, paste0(output.filename, "_", point, ".tif"), overwrite = TRUE)
+  # Read in the points table
+  points <- as.data.table(read.csv(file = village_points_filename))
+  points <- points[X_COORD > crop_limits[1] & X_COORD < crop_limits[2] &
+                     Y_COORD > crop_limits[3] & Y_COORD < crop_limits[4]]
   
-  cat("STEP 4 \n")
-  points_raster <- as.data.table(rasterToPoints(temp.raster))
+  # Fetch the number of points
+  temp <- dim(points)
+  n.points <- temp[1]
   
-  # plot(temp.raster)
-  # points(temp.points)
+  #  Define the spatial template
+  friction <- raster(friction_surface_filename)
+  fs1 <- crop(friction, extent(crop_limits[1], crop_limits[2], crop_limits[3], crop_limits[4]))
+  fs1_points <- as.data.table(rasterToPoints(fs1))
   
-  cat(point, "\n")
+  # Make and geocorrect the transition matrix (i.e., the graph)
+  T <- transition(fs1, function(x) 1/mean(x), 8) # RAM intensive, can be very slow for large areas
+  # saveRDS(T, T.filename)
+  T.GC <- geoCorrection(T)                    
+  # saveRDS(T.GC, T.GC.filename)
   
-  # cycle through all village points (lol we're already cycling through them)
-  # cycle through all forested pixels
-  # find minimum travel-time-pixel within radius of selected forested pixel
-  # assign that travel time to that forest
-  # find minimum forest travel time
-  # assign that forest to selected village point
+  points$forest_x <- NA
+  points$forest_y <- NA
+  points$forest_group <- NA
+  points$travel_time <- NA
+  
+  ################################
+  #
+  # Beginning of algorithm
+  #
+  ################################
   
   
+  # Methodology:
+  # 1) Pick a village point
+  # 2) Build the travel time raster around village
+  # 3) Sort travel time raster in increasing order of travel time
+  # 4) Search around each travel time pixel until a forest pixel is found
+  # 5) Assign that forest pixel as the closest to the selected village
+  # 6) Repeat for each village point
   
   
-  
-  ##### METHOD 1 #####
-  
-  
-  
-
-  # radius <- 0.02
-  # 
-  # forest_pixels$travel_time <- NA
-  # 
-  # cat("STEP 5 \n")
-  # for (forest_pixel in 1:nrow(forest_pixels)) {
-  #   cat("A")
-  #   # travel_time_circle <- points_raster[(x - forest_pixels$x[forest_pixel])^2 + (y - forest_pixels$y[forest_pixel])^2 <= radius^2]
-  #   travel_time_circle <- points_raster[x > forest_pixels$x[forest_pixel] - radius &
-  #                                         x < forest_pixels$x[forest_pixel] + radius &
-  #                                         y > forest_pixels$y[forest_pixel] - radius &
-  #                                         y < forest_pixels$y[forest_pixel] + radius]
-  #   # print(travel_time_circle)
-  #   cat("B")
-  #   forest_pixels$travel_time[forest_pixel] <- min(travel_time_circle$layer)
-  # 
-  #   # p <- ggplot(data = forest_pixels[layer > forest_coverage_threshold], aes(x = x, y = y)) +
-  #   #   # TODO: add option for displaying coverage percentage and picking color
-  #   # 
-  #   #   # plot raster of forested pixels:
-  #   #   # geom_raster(aes(fill = layer)) +
-  #   #   # scale_fill_gradientn(colours=c("#669933", "#336600")) +
-  #   # 
-  #   #   geom_raster(data = fs1_points, aes(fill = friction_surface_2015_v1)) +
-  #   #   scale_fill_gradientn(colours = c("white", "grey")) +
-  #   # 
-  #   #   ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
-  #   #   xlab("Longitude") +
-  #   #   ylab("Latitude") +
-  #   # 
-  #   #   # display points for each forested pixel, colored by group:
-  #   #   geom_point(data = forest_pixels,
-  #   #              aes(colour = factor(group))) +
-  #   # 
-  #   #   # geom_point(data = forest_pixels[forest_pixel],
-  #   #              # aes(size = 20)) +
-  #   # 
-  #   #   geom_point(data = temp.points, aes(x = X_COORD, y = Y_COORD),
-  #   #              shape = 17) +
-  #   # 
-  #   #   geom_point(data = travel_time_circle, aes(x = x, y = y)) +
-  #   # 
-  #   #   geom_point(data = )
-  #   # 
-  #   #   # geom_circle(data = forest_pixels[forest_pixel], aes(x0 = x, y0 = y, r = radius))
-  #   # 
-  #   # 
-  #   # p <- p + theme_classic() + theme(legend.position = "none")
-  #   # 
-  #   # print(p)
-  #   # 
-  #   # Sys.sleep(2)
-  # }
-  # 
-  # # points(forest_pixels)
-  # 
-  # cat("STEP 6 \n")
-  # points$forest_x[point] <- forest_pixels$x[forest_pixels$travel_time == min(forest_pixels$travel_time)]
-  # points$forest_y[point] <- forest_pixels$y[forest_pixels$travel_time == min(forest_pixels$travel_time)]
-  # points$forest_group[point] <- forest_pixels$group[forest_pixels$travel_time == min(forest_pixels$travel_time)]
-  # points$travel_time[point] <- forest_pixels$travel_time[forest_pixels$travel_time == min(forest_pixels$travel_time)]
-  
-  
-  
-  
-  
-  
-  ##### METHOD 2 #####
-  
-  
-  
-  
-  # sort travel time points raster in order of increasing travel time
-  # cycle through each travel time pixel
-  # build square around coordinates with size 0.0083333
-  # check if any forested pixels are within square
-
-  # square_size <- 0.0083333
-  square_size <- 0.0416666
-
-  sorted_raster <- setorder(points_raster, layer)
-
-  for (i in 1:nrow(sorted_raster)) {
-    this_pixel_x <- sorted_raster$x[i]
-    # cat("x = ", this_pixel_x, "\n")
-    this_pixel_y <- sorted_raster$y[i]
-    # cat("y = ", this_pixel_y, "\n")
-    search_square <- fs1_points[x > this_pixel_x - 0.5*square_size &
-                                  x < this_pixel_x + 0.5*square_size &
-                                  y > this_pixel_y - 0.5*square_size &
-                                  y < this_pixel_y + 0.5*square_size]
+  # cycle through each village point:
+  for(point in 1:nrow(points)) {
+    cat("Village ", point, " of ", nrow(points), "\n")
     
-    forest_in_square <- forest_pixels[x > this_pixel_x - 0.5*square_size &
-                                        x < this_pixel_x + 0.5*square_size &
-                                        y > this_pixel_y - 0.5*square_size &
-                                        y < this_pixel_y + 0.5*square_size]
-    # print("forest_in_square = ", forest_in_square)
-    # cat(nrow(forest_in_square), "\n")
+    temp.points <- points[point]
     
-    p <- ggplot() +
-      
-
-
-      geom_raster(data = fs1_points, aes(x, y, fill = friction_surface_2015_v1, alpha = 0.8)) +
-      scale_fill_gradientn(colours = c("white", "grey")) +
-      
-      ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
-      xlab("Longitude") +
-      ylab("Latitude") +
-      
-      # display points for each forested pixel, colored by group:
-      geom_point(data = forest_pixels, aes(x, y, colour = factor(group))) +
-      
-      # geom_point(data = forest_pixels[forest_pixel],
-      # aes(size = 20)) +
-      
-      geom_point(data = temp.points, aes(x = X_COORD, y = Y_COORD),
-                 shape = 17) + 
-      
-      geom_raster(data = forest_pixels, aes(x, y, fill = layer, alpha = 0.5)) +
-      
-      geom_point(aes(x = this_pixel_x, y = this_pixel_y)) +
-      
-      geom_point(data = search_square, aes(x, y), color = "orange", alpha = 0.2) +
-      
-      geom_point(data = forest_in_square, aes(x, y), color = "red", shape = 8)
+    # Convert the points into a matrix
+    xy.data.frame <- data.frame()
+    xy.data.frame[1,1] <- temp.points[,1]
+    xy.data.frame[1,2] <- temp.points[,2]
+    xy.matrix <- as.matrix(xy.data.frame)
     
-    # geom_circle(data = forest_pixels[forest_pixel], aes(x0 = x, y0 = y, r = radius))
-
-
-    p <- p + theme_classic() + theme(legend.position = "none")
-
-    print(p)
+    # Run the accumulated cost algorithm to make the final output map. This can be quite slow (potentially hours).
+    temp.raster <- accCost(T.GC, xy.matrix)
     
-    Sys.sleep(2)
+    # Write the resulting raster
+    # writeRaster(temp.raster, paste0(output.filename, "_", point, ".tif"), overwrite = TRUE)
+    
+    points_raster <- as.data.table(rasterToPoints(temp.raster))
+    
+    # sort travel time points raster in order of increasing travel time
+    # cycle through each travel time pixel
+    # build square around coordinates with size 0.0083333
+    # check if any forested pixels are within square
+    
+    # this is the size of each forest pixel (5 km x 5 km):
+    square_size <- 0.0416666
+    
+    # cut in half:
+    square_size <- 0.5*square_size
+    
+    # sort the travel time raster in order of increasing travel time:
+    sorted_raster <- setorder(points_raster, layer)
+    
+    cat("Searching for closest forest...\n")
+    
+    # cycle through the sorted travel time raster:
+    for (i in 1:nrow(sorted_raster)) {
+      cat(".")
       
-
-    if (nrow(forest_in_square) > 1) {stop("multiple forests detected")}
-
-    if (nrow(forest_in_square) > 0) {
-      points$forest_x[point] <- forest_in_square$x[1]
-      points$forest_y[point] <- forest_in_square$y[1]
-      points$forest_group[point] <- forest_in_square$group[1]
-      points$travel_time[point] <- sorted_raster[x == this_pixel_x & y == this_pixel_y, layer]
-
-      break
+      this_pixel_x <- sorted_raster$x[i]
+      this_pixel_y <- sorted_raster$y[i]
+      
+      # subset to the search square (for visualization purposes only):
+      search_square <- fs1_points[x > this_pixel_x - square_size &
+                                    x < this_pixel_x + square_size &
+                                    y > this_pixel_y - square_size &
+                                    y < this_pixel_y + square_size]
+      
+      # subset the forest pixels to only those that are within the search square:
+      forest_in_square <- forest_pixels[x > this_pixel_x - square_size &
+                                          x < this_pixel_x + square_size &
+                                          y > this_pixel_y - square_size &
+                                          y < this_pixel_y + square_size]
+      
+      
+      # p <- ggplot() +
+      # 
+      # 
+      # 
+      #   geom_raster(data = fs1_points, aes(x, y, fill = friction_surface_2015_v1, alpha = 0.8)) +
+      #   scale_fill_gradientn(colours = c("white", "grey")) +
+      # 
+      #   ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
+      #   xlab("Longitude") +
+      #   ylab("Latitude") +
+      # 
+      #   # display points for each forested pixel, colored by group:
+      #   geom_point(data = forest_pixels, aes(x, y, colour = factor(group))) +
+      # 
+      #   # geom_point(data = forest_pixels[forest_pixel],
+      #   # aes(size = 20)) +
+      # 
+      #   geom_point(data = temp.points, aes(x = X_COORD, y = Y_COORD),
+      #              shape = 17) +
+      # 
+      #   geom_raster(data = forest_pixels, aes(x, y, fill = layer, alpha = 0.5)) +
+      # 
+      #   geom_point(aes(x = this_pixel_x, y = this_pixel_y)) +
+      # 
+      #   geom_point(data = search_square, aes(x, y), color = "orange", alpha = 0.2) +
+      # 
+      #   geom_point(data = forest_in_square, aes(x, y), color = "red", shape = 8)
+      # 
+      # # geom_circle(data = forest_pixels[forest_pixel], aes(x0 = x, y0 = y, r = radius))
+      # 
+      # 
+      # p <- p + theme_classic() + theme(legend.position = "none")
+      # 
+      # print(p)
+      
+      # Sys.sleep(2)
+      
+      # throw error if multiple forested pixels are within the search square
+      # (this shouldn't happen but just a precaution):
+      if (nrow(forest_in_square) > 1) {stop("multiple forests detected")}
+      
+      # if forested pixel is detected within the search square:
+      if (nrow(forest_in_square) > 0) {
+        points$forest_x[point] <- forest_in_square$x[1]
+        points$forest_y[point] <- forest_in_square$y[1]
+        points$forest_group[point] <- forest_in_square$group[1]
+        points$travel_time[point] <- sorted_raster[x == this_pixel_x & y == this_pixel_y, layer]
+        
+        cat("\n")
+        break
+      }
     }
   }
-
+  
+  # dev.off()
+  
+  p <- ggplot(data = forest_pixels[layer > forest_coverage_threshold], aes(x = x, y = y)) +
+    # TODO: add option for displaying coverage percentage and picking color
+    
+    # plot raster of forested pixels:
+    # geom_raster(aes(fill = layer)) +
+    # scale_fill_gradientn(colours=c("#669933", "#336600")) +
+    
+    geom_raster(data = fs1_points, aes(fill = friction_surface_2015_v1)) +
+    scale_fill_gradientn(colours = c("white", "grey")) +
+    
+    ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
+    xlab("Longitude") +
+    ylab("Latitude") +
+    
+    # display points for each forested pixel, colored by group:
+    geom_point(data = forest_pixels[!is.na(forest_pixels$group)],
+               aes(colour = factor(group))) +
+    
+    geom_point(data = points, aes(x = X_COORD, y = Y_COORD, color = factor(forest_group)),
+               shape = 17) +
+    
+    geom_segment(data = points, aes(x = points$X_COORD, y = points$Y_COORD,
+                                    xend = points$forest_x, yend = points$forest_y),
+                 alpha = 0.2)
+  
+  # geom_text(data = points, aes(x = points$X_COORD, y = points$Y_COORD, label = travel_time))
   
   
+  p <- p + theme_classic() + theme(legend.position = "none")
   
+  print(p)
 }
-
-dev.off()
-
-p <- ggplot(data = test[layer > forest_coverage_threshold], aes(x = x, y = y)) +
-  # TODO: add option for displaying coverage percentage and picking color
-  
-  # plot raster of forested pixels:
-  # geom_raster(aes(fill = layer)) +
-  # scale_fill_gradientn(colours=c("#669933", "#336600")) +
-  
-  geom_raster(data = fs1_points, aes(fill = friction_surface_2015_v1)) +
-  scale_fill_gradientn(colours = c("white", "grey")) +
-  
-  ggtitle(paste0("Forest Coverage Greater Than ", as.character(forest_coverage_threshold), "%")) +
-  xlab("Longitude") +
-  ylab("Latitude") +
-  
-  # display points for each forested pixel, colored by group:
-  geom_point(data = test[!is.na(test$group)],
-             aes(colour = factor(group))) +
-  
-  geom_point(data = points, aes(x = X_COORD, y = Y_COORD, color = factor(forest_group)),
-             shape = 17) +
-  
-  geom_segment(data = points, aes(x = points$X_COORD, y = points$Y_COORD,
-                                  xend = points$forest_x, yend = points$forest_y),
-               alpha = 0.2) +
-  
-  geom_text(data = points, aes(x = points$X_COORD, y = points$Y_COORD, label = travel_time))
-  
-
-p <- p + theme_classic() + theme(legend.position = "none")
-
-p

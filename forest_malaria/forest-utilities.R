@@ -422,15 +422,15 @@ compile_shp_files <- function(shp_directory, countries_to_use, crop = FALSE, cro
 #
 ########################################################################
 
-test <- assign_villages_to_forests(data_directory = "/homes/georgoff/forest_data/forest_function_files/", forest_coverage_threshold = 90,
-                                   village_points_filename = "/homes/georgoff/georgoff.github.io/forest_malaria/data/village_points.csv",
-                                   friction_surface_filename = "/homes/georgoff/forest_data/friction_surface_2015_v1.tif",
-                                   crop = TRUE, crop_limits = c(106,108,13,15))
+# test <- assign_villages_to_forests(data_directory = "/homes/georgoff/forest_data/forest_function_files/", forest_coverage_threshold = 90,
+#                                    crop = TRUE, crop_limits = c(106,108,13,15))
 
 assign_villages_to_forests <- function(data_directory, forest_coverage_threshold,
-                                       village_points_filename, friction_surface_filename,
                                        crop = TRUE, crop_limits = c(102,108,9,15),
                                        country_borders = FALSE, countries_to_use = NULL) {
+  
+  village_points_filename <- paste0(data_directory, "/village_points.csv")
+  friction_surface_filename <- paste0(data_directory, "/friction_surface_2015_v1.tif")
   
   forest_pixels <- forest_map(data_directory = data_directory, forest_coverage_threshold = forest_coverage_threshold,
                               country_borders = country_borders, countries_to_use = countries_to_use,
@@ -623,10 +623,21 @@ assign_villages_to_forests <- function(data_directory, forest_coverage_threshold
                                     xend = points$forest_x, yend = points$forest_y),
                  alpha = 0.2)
   
+    if (country_borders) {
+      shp_tables <- compile_shp_files(shp_directory = paste0(data_directory, "AdminShapefiles/"), countries_to_use = countries_to_use, crop = crop,
+                                      crop_limits = crop_limits)
+      
+      for (i in 1:length(shp_tables)) {
+        p <- p + geom_path(data = shp_tables[[i]], aes(x = long, y = lat, group = group), color = "#000000", na.rm = FALSE)
+      }
+    }
+  
   # geom_text(data = points, aes(x = points$X_COORD, y = points$Y_COORD, label = travel_time))
   
   
   p <- p + theme_classic() + theme(legend.position = "none")
   
   print(p)
+  
+  return(points)
 }

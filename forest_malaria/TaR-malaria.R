@@ -74,11 +74,11 @@ H_psi <- t(Psi) %*% H
 X_psi <- t(Psi) %*% X
 
 # choose starting point for root solver:
-# chi_start <- vector(mode = "numeric", length = n_total)
-chi_start <- c(0.9, 0.1)
+# theta_start <- vector(mode = "numeric", length = n_total)
+theta_start <- c(0.9, 0.9)
 
 # convert to number of humans:
-X_start <- chi_start * H
+X_start <- theta_start * H
 
 ###################################
 #
@@ -90,10 +90,10 @@ model <- function(X, Psi, R, c_val, S_val, H) {
   # equation_matrix <- (Psi %*% (R * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
   # equation_matrix <- (Psi %*% ((t(1/Psi) %*% R) * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
   
-  chi_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
+  theta_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
   
-  equation_matrix <- (Psi %*% (R * (H / (t(Psi) %*% H)) * (chi_psi/(c_val*S_val*chi_psi + 1)))) * (H-X) - X
-  # equation_matrix <- (Psi %*% (R * (chi_psi/(c_val*S_val*chi_psi + 1)))) * (H-X) - X
+  equation_matrix <- (Psi %*% (R * (H / (t(Psi) %*% H)) * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
+  # equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)
 }
@@ -114,6 +114,8 @@ find_roots <- function(R,
   
   # use multiroot solver to find roots:
   ss <- multiroot(f = model, start = X_start.,
+                  positive = TRUE, maxiter = 1000,
+                  ctol = 1e-20,
                   Psi = Psi.,
                   R = R,
                   c_val = c_val,
@@ -121,11 +123,14 @@ find_roots <- function(R,
                   H = H.)
   
   # convert results to prevalence:
-  chi_SS <- ss$root / H
-  # chi_v_SS <- ss$root[1] / H_v
-  # chi_f_SS <- ss$root[2] / H_f
+  # theta_SS <- ss$root / (t(Psi) %*% H)
   
-  return(chi_SS)
+  X_psi_SS <- t(Psi) %*% ss$root
+  theta_SS <- X_psi_SS / H_psi
+  # theta_v_SS <- ss$root[1] / H_v
+  # theta_f_SS <- ss$root[2] / H_f
+  
+  return(ss)
 }
 
 
@@ -134,23 +139,38 @@ find_roots <- function(R,
 # set R values to cycle through:
 R_0_v_values <- seq(0, 5, 0.1)
 R_0_f_values <- seq(0, 5, 0.1)
+# R_0_v_values <- c(4)
+# R_0_f_values <- c(3)
 
-R_values <- rbind(R_0_f_values, R_0_v_values)
+R_values <- cbind(R_0_v_values, R_0_f_values)
 
 # create data table to store results:
-results <- data.table(R_0_v = rep(0, times = length(R_0_f_values) * length(R_0_v_values)),
-                      R_0_f = 0, chi_v = 0, chi_f = 0)
+results <- data.table(R_0_v = rep(0, times = length(R_0_f_values) * length(R_0_v_values)), R_0_f = 0,
+                      theta_v = 0, theta_f = 0,
+                      X_v = 0, X_f = 0,
+                      X_psi_v = 0, X_psi_f = 0,
+                      root_f_value_v = 0, root_f_value_f = 0,
+                      iter = 0, estim.precis = 0)
 
 i <- 1
 
 for (v in R_0_v_values) {
   for (f in R_0_f_values) {
     # record current R values:
-    results[i, R_0_v := v]
-    results[i, R_0_f := f]
+    results[i, R_0_v := as.numeric(v)]
+    results[i, R_0_f := as.numeric(f)]
     # solve for roots at those R values:
-    results[i, chi_v := find_roots(c(v, f))[1]]
-    results[i, chi_f := find_roots(c(v, f))[2]]
+    these_roots <- find_roots(c(v,f))
+    results[i, X_v := these_roots$root[1]]
+    results[i, X_f := these_roots$root[2]]
+    results[i, X_psi_v := X_v + (1-p)*X_f]
+    results[i, X_psi_f := p*X_f]
+    results[i, theta_v := X_psi_v / H_psi[1]]
+    results[i, theta_f := X_f / H[2]]
+    results[i, root_f_value_v := these_roots$f.root[1,]]
+    results[i, root_f_value_f := these_roots$f.root[2,]]
+    results[i, iter := these_roots$iter]
+    results[i, estim.precis := these_roots$estim.precis]
     
     # print progress:
     cat("R_0_v =", v, ", R_0_f =", f, " \r", file = "", sep = " ")
@@ -162,7 +182,7 @@ for (v in R_0_v_values) {
 
 heatmap <- plot_ly(x = results$R_0_v,
              y = results$R_0_f,
-             z = results$chi_v,
+             z = results$theta_v,
              type = "heatmap",
              height = 800, width = 960) %>%
   layout(title = "Equilibrium Prevalence in Village as a Function of R_0 in Village and Forest",

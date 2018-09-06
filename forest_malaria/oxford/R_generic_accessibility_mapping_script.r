@@ -26,14 +26,14 @@ require(gdistance, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 # User Defined Variables - used if clipping from the global layer, if no clipping is needed, see lines 54-55 (currently commented out).
 # This could also be accomplished by importing a shapefile (for example) 
 # Geographic Coordinates (WGS84)
-# left   <- 101.048813
-# right  <- 110.212097
-# bottom <- 7.640901
-# top    <- 16.022056
-left   <- 106
-right  <- 108
-bottom <- 13
-top    <- 15
+left   <- 101.048813
+right  <- 110.212097
+bottom <- 7.640901
+top    <- 16.022056
+# left   <- 106
+# right  <- 108
+# bottom <- 13
+# top    <- 15
 transition.matrix.exists.flag <- 0 # if the geo-corrected graph has already been made, this can save time.  Uses the same T.GC.filename as specified using the T.GC.filename variable.
 
 # Input Files
@@ -90,3 +90,4 @@ points_raster <- as.data.table(points_raster)
 
 plot(temp.raster)
 points(points)
+

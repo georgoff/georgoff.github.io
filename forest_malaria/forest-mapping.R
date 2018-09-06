@@ -21,7 +21,9 @@ rm(list = ls())
 #    georgoff.github.io/forest_malaria/forest_function_files.zip
 
 # 2) Set the data_directory variable to point to your downloaded files:
-data_directory <- "/homes/georgoff/forest_data/forest_function_files/"
+# (if you're on the IHME network drives, use the following path:
+# "/snfs1/temp/georgoff/forest_function_files/")
+data_directory <- "/snfs1/temp/georgoff/forest_function_files/"
 
 # 3) Source the forest utilities file:
 source(paste0(data_directory, "forest-utilities.R"))
@@ -39,7 +41,7 @@ load_required_packages(ihme_cluster = on_the_cluster)
 ########################################################################
 
 # Set your forest coverage threshold, as a percentage:
-forest_coverage_threshold <- 60
+forest_coverage_threshold <- 90
 
 # Pick a year of satellite data to use. Default is 2013, which is the latest
 # available year. 2001 is the earliest:
@@ -52,7 +54,7 @@ crop <- TRUE
 
 # If cropping, set the crop limits in terms of latitude and longitude. The
 # format is as follows: [left, right, bottom, top]
-crop_limits <- c(105.75,106,11.5,11.75)
+crop_limits <- c(106,108,13,15)
 
 # Indicate if you'd like to include the country borders in your map:
 country_borders <- TRUE
@@ -61,15 +63,32 @@ country_borders <- TRUE
 # Vietnam, Thailand, and Myanmar
 countries_to_use <- c("Cambodia", "Lao", "Vietnam", "Thailand", "Myanmar")
 
+# Indicate if you'd like to produce a map of clustered forests (without village
+# connectivity):
+produce_forest_map <- TRUE
+
+# Indicate if you'd like to produce a map of clustered forests and connected
+# villages:
+produce_connectivity_map <- TRUE
+
 ########################################################################
 #
 # Execute
 #
 ########################################################################
 
-forest_map(data_directory = data_directory,
-           forest_coverage_threshold = forest_coverage_threshold,
-           country_borders = country_borders,
-           countries_to_use = countries_to_use,
-           crop = crop,
-           crop_limits = crop_limits)
+if (produce_forest_map) {
+  forest_map(data_directory = data_directory,
+             forest_coverage_threshold = forest_coverage_threshold,
+             country_borders = country_borders,
+             countries_to_use = countries_to_use,
+             crop = crop,
+             crop_limits = crop_limits)
+}
+
+if (produce_connectivity_map) {
+  results <- assign_villages_to_forests(data_directory = data_directory,
+                                        forest_coverage_threshold = forest_coverage_threshold,
+                                        crop = crop, crop_limits = crop_limits,
+                                        country_borders = country_borders, countries_to_use = countries_to_use)
+}

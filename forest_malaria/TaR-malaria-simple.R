@@ -1,9 +1,10 @@
 ########################
-# TaR Malaria
+# TaR Malaria (Simple)
 #
 # Author: Alec Georgoff
 #
-# Purpose: Solve for equilibrium prevalence values given R values in a complex system
+# Purpose: Solve for equilibrium prevalence values given R values in a system with one village and
+#          one forest
 ########################
 
 rm(list = ls())
@@ -16,6 +17,23 @@ require(rootSolve)
 require(data.table)
 require(plotly)
 require(ggplot2)
+
+###################################
+#
+# Choose options
+#
+###################################
+
+R_v_min <- 0
+R_v_max <- 5
+R_v_step_size <- 0.1
+
+R_f_min <- 0
+R_f_max <- 5
+R_f_step_size <- 0.1
+
+make_surface <- T
+make_heatmap <- T
 
 ###################################
 #
@@ -39,21 +57,6 @@ p <- 0.3
 #
 ###################################
 
-## TO-DO: ask for number of villages/forests ##
-# readinteger <- function() {
-#   n <- readline(prompt = "Enter an integer: ")
-#   return(as.integer(n))
-# }
-
-
-n_villages <- 1
-n_forests <- 1
-n_total <- n_villages + n_forests
-
-# H <- vector(mode = "numeric", length = n_total)
-# V <- vector(mode = "numeric", length = n_total)
-# X <- vector(mode = "numeric", length = n_total)
-# Y <- vector(mode = "numeric", length = n_total)
 H <- as.vector(c(5000,2000))
 V <- as.vector(c(100,500))
 X <- as.vector(c(0,0))
@@ -68,14 +71,12 @@ calculate_R <- function(V, a, b, c, g, n, H, r) {
 # calculate R values:
 R <- calculate_R(V, a, b, c, g, n, H, r)
 
-# Psi <- matrix(data = 0, nrow = n_total, ncol = n_total)
 Psi <- matrix(c(1,1-p,0,p), nrow=2)
 
 H_psi <- t(Psi) %*% H
 X_psi <- t(Psi) %*% X
 
 # choose starting point for root solver:
-# theta_start <- vector(mode = "numeric", length = n_total)
 theta_start <- c(0.9, 0.9)
 
 # convert to number of humans:
@@ -88,13 +89,9 @@ X_start <- theta_start * H
 ###################################
 
 model <- function(X, Psi, R, c_val, S_val, H) {
-  # equation_matrix <- (Psi %*% (R * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
-  # equation_matrix <- (Psi %*% ((t(1/Psi) %*% R) * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
-  
   theta_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
   
   equation_matrix <- (Psi %*% (R * (H / (t(Psi) %*% H)) * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
-  # equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)
 }
@@ -123,14 +120,6 @@ find_roots <- function(R,
                   S_val = S.,
                   H = H.)
   
-  # convert results to prevalence:
-  # theta_SS <- ss$root / (t(Psi) %*% H)
-  
-  X_psi_SS <- t(Psi) %*% ss$root
-  theta_SS <- X_psi_SS / H_psi
-  # theta_v_SS <- ss$root[1] / H_v
-  # theta_f_SS <- ss$root[2] / H_f
-  
   return(ss)
 }
 
@@ -138,10 +127,8 @@ find_roots <- function(R,
 
 
 # set R values to cycle through:
-R_0_v_values <- seq(0, 5, 0.1)
-R_0_f_values <- seq(0, 5, 0.1)
-# R_0_v_values <- c(4)
-# R_0_f_values <- c(3)
+R_0_v_values <- seq(R_v_min, R_v_max, R_v_step_size)
+R_0_f_values <- seq(R_f_min, R_f_max, R_f_step_size)
 
 # create data table to store results:
 results <- data.table(R_0_v = rep(0, times = length(R_0_f_values) * length(R_0_v_values)), R_0_f = 0,
@@ -189,19 +176,46 @@ for (v in R_0_v_values) {
   }
 }
 
-heatmap <- plot_ly(x = results$R_0_v,
-             y = results$R_0_f,
-             z = results$theta_v,
-             type = "heatmap",
-             height = 800, width = 960) %>%
-  layout(title = "Equilibrium Prevalence in Village as a Function of R_0 in Village and Forest",
-         titlefont = list(size = 16),
-         xaxis = list(title = "R_0 Value, Village",
-                      titlefont = list(size = 20)),
-         yaxis = list(title = "R_0 Value, Forest",
-                      titlefont = list(size = 20)))
+if (make_heatmap) {
+  heatmap <- plot_ly(x = results$R_0_v,
+                     y = results$R_0_f,
+                     z = results$theta_v,
+                     type = "heatmap",
+                     height = 800, width = 960) %>%
+    layout(title = "Equilibrium Prevalence in Village as a Function of R_0 in Village and Forest",
+           titlefont = list(size = 16),
+           xaxis = list(title = "R_0 Value, Village",
+                        titlefont = list(size = 20)),
+           yaxis = list(title = "R_0 Value, Forest",
+                        titlefont = list(size = 20)))
+  
+  heatmap
+}
 
-heatmap
+if (make_surface) {
+  results$thresh <- "malaria!"
+  results$thresh[which(results$theta_v < 0.00001)] <- "no malaria"
+  results$thresh[which(results$R_0_v < 1 & results$R_0_f < 1)] <- "SAFE ZONE"
+  
+  surface <- plot_ly(data = results,
+                x = ~R_0_v,
+                y = ~R_0_f,
+                z = ~chi_v,
+                color = ~thresh,
+                colors = c("red", "blue", "purple"),
+                type = "scatter3d") %>%
+    add_markers() %>%
+    layout(
+      title = "Malaria Prevalence in the Village as a Function of R_0",
+      scene = list(
+        xaxis = list(title = "R_0, Village"),
+        yaxis = list(title = "R_0, Forest"),
+        zaxis = list(title = "Village Malaria Prevalence")
+      )
+    )
+  
+  surface
+}
 
 # 
 # my_plot <- ggplot(data = results) +

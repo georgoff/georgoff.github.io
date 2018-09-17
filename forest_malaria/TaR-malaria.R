@@ -17,11 +17,18 @@ require(data.table)
 require(plotly)
 require(ggplot2)
 
+village_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/village_params.csv"
+forest_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/forest_params.csv"
+
 ###################################
 #
 # Set parameters
 #
 ###################################
+
+# this script assumes that the following parameters are the same for every
+# location; in reality this may not be accurate. an update may be made that
+# allows for custom parameters in every location
 
 a <- 0.88 # human blood feeding rate
 b <- 0.55 # proportion of bites by infectious mosquitoes that cause an infection
@@ -45,19 +52,28 @@ p <- 0.3
 #   return(as.integer(n))
 # }
 
+# read in village and forest parameters from .csv file:
+village_params <- read.csv(village_params_path)
+forest_params <- read.csv(forest_params_path)
 
-n_villages <- 1
-n_forests <- 1
+H_v <- village_params$H_v
+V_v <- village_params$V_v
+X_v <- village_params$X_v
+Y_v <- village_params$Y_v
+
+H_f <- forest_params$H_f
+V_f <- forest_params$V_f
+X_f <- forest_params$X_f
+Y_f <- forest_params$Y_f
+
+H <- c(H_v, H_f)
+V <- c(V_v, V_f)
+X <- c(X_v, X_f)
+Y <- c(Y_v, Y_f)
+
+n_villages <- nrow(village_params)
+n_forests <- nrow(forest_params)
 n_total <- n_villages + n_forests
-
-# H <- vector(mode = "numeric", length = n_total)
-# V <- vector(mode = "numeric", length = n_total)
-# X <- vector(mode = "numeric", length = n_total)
-# Y <- vector(mode = "numeric", length = n_total)
-H <- as.vector(c(5000,2000))
-V <- as.vector(c(100,500))
-X <- as.vector(c(0,0))
-Y <- as.vector(c(0,0))
 
 # set up function to calculate R values:
 calculate_R <- function(V, a, b, c, g, n, H, r) {

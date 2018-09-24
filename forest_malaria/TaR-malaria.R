@@ -19,6 +19,7 @@ require(ggplot2)
 
 village_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/village_params.csv"
 forest_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/forest_params.csv"
+params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/params.csv"
 psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
 
 ###################################
@@ -54,37 +55,45 @@ p <- 0.3
 # }
 
 # read in village and forest parameters from .csv file:
-village_params <- as.data.table(read.csv(village_params_path))
-forest_params <- as.data.table(read.csv(forest_params_path))
-all_params <- rbindlist(list(village_params, forest_params))
 
-H_v <- village_params$H
-V_v <- village_params$V
-X_v <- village_params$X
-Y_v <- village_params$Y
+params <- as.data.table(read.csv(params_path))
 
-H_f <- forest_params$H
-V_f <- forest_params$V
-X_f <- forest_params$X
-Y_f <- forest_params$Y
+n_villages <- nrow(params)
 
-H <- c(H_v, H_f)
-V <- c(V_v, V_f)
-X <- c(X_v, X_f)
-Y <- c(Y_v, Y_f)
+H <- params$H
+X <- vector(mode = "numeric", length = length(H))
 
-n_villages <- nrow(village_params)
-n_forests <- nrow(forest_params)
-n_total <- n_villages + n_forests
+# village_params <- as.data.table(read.csv(village_params_path))
+# forest_params <- as.data.table(read.csv(forest_params_path))
+# all_params <- rbindlist(list(village_params, forest_params))
+# 
+# H_v <- village_params$H
+# V_v <- village_params$V
+# X_v <- village_params$X
+# Y_v <- village_params$Y
+# 
+# H_f <- forest_params$H
+# V_f <- forest_params$V
+# X_f <- forest_params$X
+# Y_f <- forest_params$Y
+# 
+# H <- c(H_v, H_f)
+# V <- c(V_v, V_f)
+# X <- c(X_v, X_f)
+# Y <- c(Y_v, Y_f)
+# 
+# n_villages <- nrow(village_params)
+# n_forests <- nrow(forest_params)
+# n_total <- n_villages + n_forests
 
-# set up function to calculate R values:
-calculate_R <- function(V, a, b, c, g, n, H, r) {
-  R = (V * a^2 * b * c * exp(-g * n)) / (H * g * r)
-  return(R)
-}
-
-# calculate R values:
-R <- calculate_R(V, a, b, c, g, n, H, r)
+# # set up function to calculate R values:
+# calculate_R <- function(V, a, b, c, g, n, H, r) {
+#   R = (V * a^2 * b * c * exp(-g * n)) / (H * g * r)
+#   return(R)
+# }
+# 
+# # calculate R values:
+# R <- calculate_R(V, a, b, c, g, n, H, r)
 
 # Psi <- matrix(data = 0, nrow = n_total, ncol = n_total)
 # Psi <- matrix(c(1,1-p,0,p), nrow=2)
@@ -96,8 +105,9 @@ H_psi <- t(Psi) %*% H
 X_psi <- t(Psi) %*% X
 
 # choose starting point for root solver:
-# theta_start <- vector(mode = "numeric", length = n_total)
-theta_start <- c(0.9, 0.9)
+theta_start <- vector(mode = "numeric", length = length(H))
+theta_start[1:length(theta_start)] <- 0.9
+# theta_start <- c(0.9, 0.9)
 
 # convert to number of humans:
 X_start <- theta_start * H
@@ -109,13 +119,10 @@ X_start <- theta_start * H
 ###################################
 
 model <- function(X, Psi, R, c_val, S_val, H) {
-  # equation_matrix <- (Psi %*% (R * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
-  # equation_matrix <- (Psi %*% ((t(1/Psi) %*% R) * ((t(Psi) %*% X)/(c_val*S_val*t(Psi) %*% X + t(Psi) %*% H)))) * (H-X) - X
   
   theta_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
   
   equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
-  # equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)
 }
@@ -131,7 +138,6 @@ find_roots <- function(R,
                        H. = H,
                        S. = S,
                        c_val = c,
-                       p_val = p,
                        X_start. = X_start) {
   
   # use multiroot solver to find roots:

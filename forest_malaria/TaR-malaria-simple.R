@@ -91,7 +91,7 @@ X_start <- theta_start * H
 model <- function(X, Psi, R, c_val, S_val, H) {
   theta_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
   
-  equation_matrix <- (Psi %*% (R * (H / (t(Psi) %*% H)) * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
+  equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)
 }
@@ -200,7 +200,7 @@ if (make_surface) {
   surface <- plot_ly(data = results,
                 x = ~R_0_v,
                 y = ~R_0_f,
-                z = ~chi_v,
+                z = ~theta_v,
                 color = ~thresh,
                 colors = c("red", "blue", "purple"),
                 type = "scatter3d") %>%

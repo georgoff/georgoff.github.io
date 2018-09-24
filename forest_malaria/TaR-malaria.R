@@ -19,6 +19,7 @@ require(ggplot2)
 
 village_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/village_params.csv"
 forest_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/forest_params.csv"
+psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
 
 ###################################
 #
@@ -53,18 +54,19 @@ p <- 0.3
 # }
 
 # read in village and forest parameters from .csv file:
-village_params <- read.csv(village_params_path)
-forest_params <- read.csv(forest_params_path)
+village_params <- as.data.table(read.csv(village_params_path))
+forest_params <- as.data.table(read.csv(forest_params_path))
+all_params <- rbindlist(list(village_params, forest_params))
 
-H_v <- village_params$H_v
-V_v <- village_params$V_v
-X_v <- village_params$X_v
-Y_v <- village_params$Y_v
+H_v <- village_params$H
+V_v <- village_params$V
+X_v <- village_params$X
+Y_v <- village_params$Y
 
-H_f <- forest_params$H_f
-V_f <- forest_params$V_f
-X_f <- forest_params$X_f
-Y_f <- forest_params$Y_f
+H_f <- forest_params$H
+V_f <- forest_params$V
+X_f <- forest_params$X
+Y_f <- forest_params$Y
 
 H <- c(H_v, H_f)
 V <- c(V_v, V_f)
@@ -85,7 +87,10 @@ calculate_R <- function(V, a, b, c, g, n, H, r) {
 R <- calculate_R(V, a, b, c, g, n, H, r)
 
 # Psi <- matrix(data = 0, nrow = n_total, ncol = n_total)
-Psi <- matrix(c(1,1-p,0,p), nrow=2)
+# Psi <- matrix(c(1,1-p,0,p), nrow=2)
+Psi <- as.data.table(read.csv(psi_path))
+Psi[, id := NULL]
+Psi <- as.matrix(Psi)
 
 H_psi <- t(Psi) %*% H
 X_psi <- t(Psi) %*% X
@@ -109,7 +114,7 @@ model <- function(X, Psi, R, c_val, S_val, H) {
   
   theta_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
   
-  equation_matrix <- (Psi %*% (R * (H / (t(Psi) %*% H)) * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
+  equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   # equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)

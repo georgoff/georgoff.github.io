@@ -100,6 +100,7 @@ X <- vector(mode = "numeric", length = length(H))
 Psi <- as.data.table(read.csv(psi_path))
 Psi[, id := NULL]
 Psi <- as.matrix(Psi)
+Psi_dt <- as.data.table(Psi)
 
 H_psi <- t(Psi) %*% H
 X_psi <- t(Psi) %*% X
@@ -125,6 +126,7 @@ model <- function(X, Psi, R, c_val, S_val, H) {
   equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
   
   return(equation_matrix)
+  
 }
 
 ###################################
@@ -162,21 +164,52 @@ find_roots <- function(R,
 }
 
 
+# create table of all possible R values and cycle thru each row of that
+
+R_min <- 0
+R_max <- 2
+R_step <- 0.5
+
+all_R_values <- seq(R_min, R_max, R_step)
+
+results <- as.data.table(expand.grid(v1 = all_R_values,
+                                     v2 = all_R_values,
+                                     v3 = all_R_values,
+                                     f1 = all_R_values,
+                                     f2 = all_R_values))
+
+results[, theta_v1 := 0]
+results[, theta_v2 := 0]
+results[, theta_v3 := 0]
+results[, theta_f1 := 0]
+results[, theta_f2 := 0]
+
+for (i in 1:nrow(results)) {
+  cat("Working on ", i, " of ", nrow(results), "\n")
+  
+  these_R_values <- unlist(results[i, 1:5], use.names = FALSE)
+  
+  X_solutions <- find_roots(these_R_values)$root
+  
+  theta_solutions <- (t(Psi) %*% X_solutions) / H_psi
+  
+  results[i, 6:10 := list(theta_solutions[1],
+                          theta_solutions[2],
+                          theta_solutions[3],
+                          theta_solutions[4],
+                          theta_solutions[5])]
+}
 
 
-# set R values to cycle through:
-R_0_v_values <- seq(0, 5, 0.1)
-R_0_f_values <- seq(0, 5, 0.1)
-# R_0_v_values <- c(4)
-# R_0_f_values <- c(3)
+# results2 <- as.data.table(expand.grid(names(Psi_dt) = all_R_values))
 
 # create data table to store results:
-results <- data.table(R_0_v = rep(0, times = length(R_0_f_values) * length(R_0_v_values)), R_0_f = 0,
-                      theta_v = 0, theta_f = 0,
-                      X_v = 0, X_f = 0,
-                      X_psi_v = 0, X_psi_f = 0,
-                      root_f_value_v = 0, root_f_value_f = 0,
-                      iter = 0, estim.precis = 0)
+# results <- data.table(R_0_v = rep(0, times = length(R_0_f_values) * length(R_0_v_values)), R_0_f = 0,
+#                       theta_v = 0, theta_f = 0,
+#                       X_v = 0, X_f = 0,
+#                       X_psi_v = 0, X_psi_f = 0,
+#                       root_f_value_v = 0, root_f_value_f = 0,
+#                       iter = 0, estim.precis = 0)
 
 i <- 1
 

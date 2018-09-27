@@ -201,6 +201,32 @@ for (i in 1:nrow(results)) {
 }
 
 
+pdf("/homes/georgoff/georgoff.github.io/forest_malaria/test.pdf")
+
+for (j in 1:500) {
+  this_row <- data.table(loc = c(paste0("v1\n",
+                                        "R = ", results[j, v1]),
+                                 paste0("v2\n",
+                                        "R = ", results[j, v2]),
+                                 paste0("v3\n",
+                                        "R = ", results[j, v3]),
+                                 paste0("f1\n",
+                                        "R = ", results[j, f1]),
+                                 paste0("f2\n",
+                                        "R = ", results[j, f2])),
+                         theta = unlist(results[j, 6:10], use.names = F))
+  
+  bar <- ggplot(data = this_row,
+                aes(x = loc, y = theta)) +
+    geom_col() +
+    geom_text(aes(label = round(theta, 3), y = theta + 0.02)) +
+    coord_cartesian(ylim = c(0,0.31))
+  
+  print(bar)
+}
+
+dev.off()
+
 # results2 <- as.data.table(expand.grid(names(Psi_dt) = all_R_values))
 
 # create data table to store results:

@@ -179,18 +179,15 @@ for (i in 1:nrow(results)) {
 
 pdf("/homes/georgoff/georgoff.github.io/forest_malaria/test.pdf")
 
+this_row_locs <- vector(mode = "character", length = length(locs))
+
 for (j in 1:500) {
-  this_row <- data.table(loc = c(paste0("v1\n",
-                                        "R = ", results[j, v1]),
-                                 paste0("v2\n",
-                                        "R = ", results[j, v2]),
-                                 paste0("v3\n",
-                                        "R = ", results[j, v3]),
-                                 paste0("f1\n",
-                                        "R = ", results[j, f1]),
-                                 paste0("f2\n",
-                                        "R = ", results[j, f2])),
-                         theta = unlist(results[j, 6:10], use.names = F))
+  for (location in 1:length(locs)) {
+    this_row_locs[location] <- paste0(locs[location], "\nR = ", as.character(results[j, ..location]))
+  }
+  
+  this_row <- data.table(loc = this_row_locs,
+                         theta = unlist(results[j, (1+length(locs)):ncol(results)], use.names = F))
   
   bar <- ggplot(data = this_row,
                 aes(x = loc, y = theta)) +

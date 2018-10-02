@@ -17,16 +17,22 @@ require(data.table)
 require(plotly)
 require(ggplot2)
 
-village_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/village_params.csv"
-forest_params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/forest_params.csv"
-params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/params.csv"
-psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
-
 ###################################
 #
 # Set parameters
 #
 ###################################
+
+# specify filepaths for parameter .csv files:
+
+params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/params.csv"
+psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
+
+# set R values to cycle over:
+
+R_min <- 0
+R_max <- 2
+R_step <- 0.5
 
 # this script assumes that the following parameters are the same for every
 # location; in reality this may not be accurate. an update may be made that
@@ -114,9 +120,11 @@ find_roots <- function(R,
   return(ss)
 }
 
-R_min <- 0
-R_max <- 2
-R_step <- 0.5
+###################################
+#
+# Set up results table
+#
+###################################
 
 all_R_values <- seq(R_min, R_max, R_step)
 
@@ -128,8 +136,12 @@ for (i in 1:length(locs)) {
   names(list_of_R_values)[i] <- locs[i]
 }
 
+# fill results table with every possible combination of
+# R values:
+
 results <- as.data.table(expand.grid(list_of_R_values))
 
+# put in placeholder for theta values:
 
 theta_holder <- as.data.table(matrix(data = 0, nrow = nrow(results), ncol = length(locs)))
 
@@ -138,6 +150,12 @@ for (k in 1:length(locs)) {
 }
 
 results <- cbind(results, theta_holder)
+
+###################################
+#
+# Cycle through R values
+#
+###################################
 
 for (i in 1:nrow(results)) {
   cat("Working on ", i, " of ", nrow(results), "\n")
@@ -153,6 +171,11 @@ for (i in 1:nrow(results)) {
   }
 }
 
+###################################
+#
+# Create PDF of results
+#
+###################################
 
 pdf("/homes/georgoff/georgoff.github.io/forest_malaria/test.pdf")
 
@@ -179,33 +202,3 @@ for (j in 1:500) {
 }
 
 dev.off()
-
-heatmap <- plot_ly(x = results$R_0_v,
-             y = results$R_0_f,
-             z = results$theta_v,
-             type = "heatmap",
-             height = 800, width = 960) %>%
-  layout(title = "Equilibrium Prevalence in Village as a Function of R_0 in Village and Forest",
-         titlefont = list(size = 16),
-         xaxis = list(title = "R_0 Value, Village",
-                      titlefont = list(size = 20)),
-         yaxis = list(title = "R_0 Value, Forest",
-                      titlefont = list(size = 20)))
-
-heatmap
-
-# 
-# my_plot <- ggplot(data = results) +
-#   geom_raster(aes(x = R_0_v, y = R_0_f, fill = theta_v)) +
-#   scale_fill_gradientn(colours = c("blue", "red")) +
-#   
-#   # geom_point(data = results[theta_v > 0.01 & theta_v < 0.1],
-#   #            aes(x = R_0_v, y = R_0_f)) +
-#   
-#   geom_segment(aes(x = 0, xend = 1, y = 1, yend = 1, color = "yellow")) +
-#   
-#   labs(title = paste0("Equilibrium Village Prevalence of Malaria \n", "p = ", p),
-#        x = "R_0 Value in Village",
-#        y = "R_0 Value in Forest")
-# 
-# my_plot

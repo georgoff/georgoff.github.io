@@ -8,10 +8,6 @@
 
 rm(list = ls())
 
-# require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-# require(data.table)
-# require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-
 require(rootSolve)
 require(data.table)
 require(plotly)
@@ -34,17 +30,21 @@ R_min <- 0
 R_max <- 2
 R_step <- 0.5
 
+# PDF output settings:
+output_PDF <- TRUE
+pdf_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
+
 # this script assumes that the following parameters are the same for every
 # location; in reality this may not be accurate. an update may be made that
 # allows for custom parameters in every location
 
-a <- 0.88 # human blood feeding rate
-b <- 0.55 # proportion of bites by infectious mosquitoes that cause an infection
-c <- 0.15 # proportion of mosquitoes infected after biting infectious human
-g <- 0.1 # per capita death rate of mosquitoes
-r <- 1/200 # rate that humans recover from an infection
-n <- 12 # time for sporogonic cycle
-S <- a/g # stability index
+a <- 0.88   # human blood feeding rate
+b <- 0.55   # proportion of bites by infectious mosquitoes that cause an infection
+c <- 0.15   # proportion of mosquitoes infected after biting infectious human
+g <- 0.1    # per capita death rate of mosquitoes
+r <- 1/200  # rate that humans recover from an infection
+n <- 12     # time for sporogonic cycle
+S <- a/g    # stability index
 
 ###################################
 #
@@ -88,9 +88,10 @@ model <- function(X, Psi, R, c_val, S_val, H) {
   
   theta_psi <- (t(Psi) %*% X) / (t(Psi) %*% H)
   
-  equation_matrix <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) * (H-X) - X
+  equation_vector <- (Psi %*% (R * (theta_psi/(c_val*S_val*theta_psi + 1)))) *
+    (H-X) - X
   
-  return(equation_matrix)
+  return(equation_vector)
   
 }
 
@@ -143,7 +144,8 @@ results <- as.data.table(expand.grid(list_of_R_values))
 
 # put in placeholder for theta values:
 
-theta_holder <- as.data.table(matrix(data = 0, nrow = nrow(results), ncol = length(locs)))
+theta_holder <- as.data.table(matrix(data = 0, nrow = nrow(results),
+                                     ncol = length(locs)))
 
 for (k in 1:length(locs)) {
   names(theta_holder)[k] <- paste0("theta_", locs[k])
@@ -177,25 +179,30 @@ for (i in 1:nrow(results)) {
 #
 ###################################
 
-pdf("/homes/georgoff/georgoff.github.io/forest_malaria/test.pdf")
-
-this_row_locs <- vector(mode = "character", length = length(locs))
-
-for (j in 1:500) {
-  for (location in 1:length(locs)) {
-    this_row_locs[location] <- paste0(locs[location], "\nR = ", as.character(results[j, ..location]))
+if (output_PDF) {
+  pdf(pdf_filepath)
+  
+  this_row_locs <- vector(mode = "character", length = length(locs))
+  
+  for (j in 1:500) {
+    for (location in 1:length(locs)) {
+      this_row_locs[location] <- paste0(locs[location],
+                                        "\nR = ",
+                                        as.character(results[j, ..location]))
+    }
+    
+    this_row <- data.table(loc = this_row_locs,
+                           theta = unlist(results[j, (1+length(locs)):ncol(results)],
+                                          use.names = F))
+    
+    bar <- ggplot(data = this_row,
+                  aes(x = loc, y = theta)) +
+      geom_col() +
+      geom_text(aes(label = round(theta, 3), y = theta + 0.02)) +
+      coord_cartesian(ylim = c(0,0.31))
+    
+    print(bar)
   }
   
-  this_row <- data.table(loc = this_row_locs,
-                         theta = unlist(results[j, (1+length(locs)):ncol(results)], use.names = F))
-  
-  bar <- ggplot(data = this_row,
-                aes(x = loc, y = theta)) +
-    geom_col() +
-    geom_text(aes(label = round(theta, 3), y = theta + 0.02)) +
-    coord_cartesian(ylim = c(0,0.31))
-  
-  print(bar)
+  dev.off()
 }
-
-dev.off()

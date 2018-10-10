@@ -51,8 +51,7 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("Constants",
-                 textOutput(outputId = "a_text"),
-                 textOutput(outputId = "b_text")),
+                 tableOutput(outputId = "constants_table")),
         tabPanel("Parameters",
                  tableOutput(outputId = "params_table"),
                  tableOutput(outputId = "psi_table"))
@@ -63,12 +62,14 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-  output$a_text <- renderText({
-    as.character(input$a)
-  })
-  
-  output$b_text <- renderText({
-    as.character(input$b)
+  output$constants_table <- renderTable({
+    table <- as.data.table(matrix(nrow = 6, ncol = 2))
+    names(table) <- c("Constant", "Value")
+    table[, "Constant"] <- c("a", "b", "c", "g", "n", "r")
+    table[, "Value"] <- c(input$a, input$b, input$c,
+                          input$g, input$n, input$r)
+    
+    table
   })
   
   output$params_table <- renderTable({

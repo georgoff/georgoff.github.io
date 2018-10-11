@@ -19,30 +19,30 @@ require(ggplot2)
 
 # specify filepaths for parameter .csv files:
 
-params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/params.csv"
-psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
+# params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/params.csv"
+# psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
 
 # set R values to cycle over:
 
-R_min <- 0
-R_max <- 2
-R_step <- 0.5
+# R_min <- 0
+# R_max <- 2
+# R_step <- 0.5
 
 # PDF output settings:
-output_PDF <- TRUE
-pdf_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
+# output_PDF <- TRUE
+# pdf_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
 
 # this script assumes that the following parameters are the same for every
 # location; in reality this may not be accurate. an update may be made that
 # allows for custom parameters in every location
 
-a <- 0.88   # human blood feeding rate
-b <- 0.55   # proportion of bites by infectious mosquitoes that cause an infection
-c <- 0.15   # proportion of mosquitoes infected after biting infectious human
-g <- 0.1    # per capita death rate of mosquitoes
-r <- 1/200  # rate that humans recover from an infection
-n <- 12     # time for sporogonic cycle
-S <- a/g    # stability index
+# a <- 0.88   # human blood feeding rate
+# b <- 0.55   # proportion of bites by infectious mosquitoes that cause an infection
+# c <- 0.15   # proportion of mosquitoes infected after biting infectious human
+# g <- 0.1    # per capita death rate of mosquitoes
+# r <- 1/200  # rate that humans recover from an infection
+# n <- 12     # time for sporogonic cycle
+# S <- a/g    # stability index
 
 ###################################
 #
@@ -52,29 +52,43 @@ S <- a/g    # stability index
 
 # read in village and forest parameters from .csv file:
 
-params <- as.data.table(read.csv(params_path))
+initialize_variables <- function(inFile_params, inFile_psi) {
+  params <- as.data.table(read.csv(inFile_params$datapath))
 
-n_villages <- nrow(params)
+  H <- params$H
+  X <- vector(mode = "numeric", length = length(H))
 
-H <- params$H
-X <- vector(mode = "numeric", length = length(H))
+  Psi <- as.data.table(read.csv(inFile_psi$datapath))
+  Psi[, id := NULL]
+  Psi <- as.matrix(Psi)
+  Psi_dt <- as.data.table(Psi)
 
-Psi <- as.data.table(read.csv(psi_path))
-Psi[, id := NULL]
-Psi <- as.matrix(Psi)
-Psi_dt <- as.data.table(Psi)
+  locs <- names(Psi_dt)
 
-locs <- names(Psi_dt)
+  return(list("H" = H,
+              "X" = X,
+              "Psi" = Psi,
+              "locs" = locs))
+}
 
-H_psi <- t(Psi) %*% H
-X_psi <- t(Psi) %*% X
+initialize_variables_2 <- function(inFile_params, inFile_psi) {
+  params <- as.data.table(read.csv(inFile_params))
 
-# choose starting point for root solver:
-theta_start <- vector(mode = "numeric", length = length(H))
-theta_start[1:length(theta_start)] <- 0.9
+  H <- params$H
+  X <- vector(mode = "numeric", length = length(H))
 
-# convert to number of humans:
-X_start <- theta_start * H
+  Psi <- as.data.table(read.csv(inFile_psi))
+  Psi[, id := NULL]
+  Psi <- as.matrix(Psi)
+  Psi_dt <- as.data.table(Psi)
+
+  locs <- names(Psi_dt)
+
+  return(list("H" = H,
+              "X" = X,
+              "Psi" = Psi,
+              "locs" = locs))
+}
 
 ###################################
 #
@@ -99,15 +113,17 @@ model <- function(X, Psi, R, c_val, S_val, H) {
 #
 ###################################
 
-find_roots <- function(R,
-                       Psi. = Psi,
-                       H. = H,
-                       S. = S,
-                       c_val = c,
-                       X_start. = X_start) {
+find_roots <- function(R, Psi., H., S., c_val) {
+  
+  # choose starting point for root solver:
+  theta_start <- vector(mode = "numeric", length = length(H.))
+  theta_start[1:length(theta_start)] <- 0.9
+  
+  # convert to number of humans:
+  X_start <- theta_start * H.
 
   # use multiroot solver to find roots:
-  ss <- multiroot(f = model, start = X_start.,
+  ss <- multiroot(f = model, start = X_start,
                   positive = TRUE, maxiter = 1000,
                   ctol = 1e-20,
                   Psi = Psi.,
@@ -124,33 +140,31 @@ find_roots <- function(R,
 # Set up results table
 #
 ###################################
-create_results_table <- function()
 
-all_R_values <- seq(R_min, R_max, R_step)
+create_results_table <- function(R_min, R_max, R_step, locs) {
+  all_R_values <- seq(R_min, R_max, R_step)
 
-list_of_R_values <- list(NULL)
+  list_of_R_values <- list(NULL)
 
-for (i in 1:length(locs)) {
-  list_of_R_values[[i]] <- all_R_values
+  for (i in 1:length(locs)) {
+    list_of_R_values[[i]] <- all_R_values
 
-  names(list_of_R_values)[i] <- locs[i]
+    names(list_of_R_values)[i] <- locs[i]
+  }
+
+  results <- as.data.table(expand.grid(list_of_R_values))
+
+  theta_holder <- as.data.table(matrix(data = 0, nrow = nrow(results),
+                                       ncol = length(locs)))
+
+  for (k in 1:length(locs)) {
+    names(theta_holder)[k] <- paste0("theta_", locs[k])
+  }
+
+  results <- cbind(results, theta_holder)
+
+  return(results)
 }
-
-# fill results table with every possible combination of
-# R values:
-
-results <- as.data.table(expand.grid(list_of_R_values))
-
-# put in placeholder for theta values:
-
-theta_holder <- as.data.table(matrix(data = 0, nrow = nrow(results),
-                                     ncol = length(locs)))
-
-for (k in 1:length(locs)) {
-  names(theta_holder)[k] <- paste0("theta_", locs[k])
-}
-
-results <- cbind(results, theta_holder)
 
 ###################################
 #
@@ -158,50 +172,24 @@ results <- cbind(results, theta_holder)
 #
 ###################################
 
-for (i in 1:nrow(results)) {
-  cat("Working on ", i, " of ", nrow(results), "\n")
-
-  these_R_values <- unlist(results[i, 1:length(locs)], use.names = FALSE)
-
-  X_solutions <- find_roots(these_R_values)$root
-
-  theta_solutions <- (t(Psi) %*% X_solutions) / H_psi
-
-  for (j in (1 + length(locs)):ncol(results)) {
-    results[i, j] <- theta_solutions[j - length(locs)]
-  }
-}
-
-###################################
-#
-# Create PDF of results
-#
-###################################
-
-if (output_PDF) {
-  pdf(pdf_filepath)
-
-  this_row_locs <- vector(mode = "character", length = length(locs))
-
-  for (j in 1:500) {
-    for (location in 1:length(locs)) {
-      this_row_locs[location] <- paste0(locs[location],
-                                        "\nR = ",
-                                        as.character(results[j, ..location]))
+solve_all_R_values <- function(results, locs,
+                               Psi, H, S, c) {
+  for (i in 1:nrow(results)) {
+    # cat("Working on ", i, " of ", nrow(results), "\n")
+    
+    these_R_values <- unlist(results[i, 1:length(locs)], use.names = FALSE)
+    
+    X_solutions <- find_roots(R = these_R_values,
+                              Psi. = Psi, H. = H, S. = S, c_val = c)$root
+    
+    theta_solutions <- (t(Psi) %*% X_solutions) / (t(Psi) %*% H)
+    
+    for (j in (1 + length(locs)):ncol(results)) {
+      results[i, j] <- theta_solutions[j - length(locs)]
     }
-
-    this_row <- data.table(loc = this_row_locs,
-                           theta = unlist(results[j, (1+length(locs)):ncol(results)],
-                                          use.names = F))
-
-    bar <- ggplot(data = this_row,
-                  aes(x = loc, y = theta)) +
-      geom_col() +
-      geom_text(aes(label = round(theta, 3), y = theta + 0.02)) +
-      coord_cartesian(ylim = c(0,0.31))
-
-    print(bar)
+    
+    incProgress(1/nrow(results), detail = paste("Working on", i, "of", nrow(results)))
   }
-
-  dev.off()
+  
+  return(results)
 }

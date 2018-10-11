@@ -7,6 +7,9 @@ ui <- fluidPage(
   titlePanel("Forest Malaria Simulator"),
   
   tabsetPanel(
+    tabPanel("Home",
+             img(src = "mosely.png", height = 600, width = 600)),
+    
     tabPanel("Constants",
              sidebarLayout(
                sidebarPanel(numericInput(inputId = "a",

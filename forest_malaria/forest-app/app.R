@@ -1,5 +1,8 @@
 library(shiny)
 library(data.table)
+library(DT)
+
+rm(list = ls())
 
 source("H:/georgoff.github.io/forest_malaria/TaR-malaria-functions.R")
 
@@ -37,7 +40,7 @@ ui <- fluidPage(
                                          value = 1/200,
                                          min = 0)),
                
-               mainPanel(tableOutput(outputId = "constants_table")))
+               mainPanel(DTOutput(outputId = "constants_table")))
              ),
     
     tabPanel("Parameters",
@@ -53,8 +56,8 @@ ui <- fluidPage(
                                                  "text/comma-separated-values,text/plain",
                                                  ".csv"))),
                
-               mainPanel(tableOutput(outputId = "params_table"),
-                         tableOutput(outputId = "psi_table"))
+               mainPanel(dataTableOutput(outputId = "params_table"),
+                         dataTableOutput(outputId = "psi_table"))
              )
              ),
     
@@ -82,10 +85,12 @@ ui <- fluidPage(
                  h3("If you are satisfied with simulation setup, press GO:"),
                  actionButton(inputId = "go_button",
                               label = "GO",
-                              width = "100%")),
+                              width = "100%"),
+                 downloadButton(outputId = "download_button",
+                                label = "Download Results")),
                
                mainPanel(
-                 textOutput(outputId = "results_text")
+                 dataTableOutput(outputId = "results_table")
                )
              ))
   )
@@ -93,7 +98,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-  output$constants_table <- renderTable({
+  output$constants_table <- renderDT({
     table <- as.data.table(matrix(nrow = 6, ncol = 2))
     names(table) <- c("Constant", "Value")
     table[, "Constant"] <- c("a", "b", "c", "g", "n", "r")
@@ -103,25 +108,22 @@ server <- function(input, output) {
     table
   })
   
-  output$params_table <- renderTable({
-    inFile <- input$params_csv
-    
-    if (is.null(inFile)) {
-      return("Please upload params.csv")
-    }
+  observeEvent(input$params_csv,
+               {
+                 inFile_params <- input$params_csv
+                 
+                 output$params_table <- renderDT({
+                   return(read.csv(inFile_params$datapath))
+                 }
+                 )
+               })
   
-    read.csv(inFile$datapath)
-  })
-  
-  output$psi_table <- renderTable({
-    inFile <- input$psi_csv
-    
-    if (is.null(inFile)) {
-      return("Please upload psi.csv")
-    }
-    
-    read.csv(inFile$datapath)
-  })
+  observeEvent(input$psi_csv,
+               {
+                 output$psi_table <- renderDT({
+                   return(read.csv(input$psi_csv$datapath))
+                 })
+               })
   
   output$R_statement <- renderText({
     paste0("R will range from ", as.character(input$R_min), " to ", as.character(input$R_max),
@@ -137,7 +139,7 @@ server <- function(input, output) {
                                     R_step = input$R_step,
                                     locs = variables$locs)
     
-    output$results_text <- renderText({
+    output$results_table <- renderDT({
       withProgress(message = "Working", value = 0, {
         # solve!
         results <- solve_all_R_values(results = results,
@@ -148,9 +150,28 @@ server <- function(input, output) {
                                       c = input$c)
       })
       
-      print("I'm done!")
-    })
+      results
+    },
+    server = FALSE,
+    extensions = "Buttons", options = list(
+      dom = "Bfrtip",
+      buttons = 
+        list("copy", "print", list(
+          extend = "collection",
+          buttons = c("csv", "excel", "pdf"),
+          text = "Download"
+        ))
+    ))
   })
+  
+  output$download_button <- downloadHandler(
+    filename = function() {
+      "simulation_results.csv"
+    },
+    content = function(file) {
+      write.csv(results, file, row.names = FALSE)
+    }
+  )
 }
 
 shinyApp(ui = ui, server = server)

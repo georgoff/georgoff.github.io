@@ -8,10 +8,11 @@
 
 rm(list = ls())
 
-require(rootSolve)
-require(data.table)
-require(plotly)
-require(ggplot2)
+require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(gridExtra, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
 ###################################
 #
@@ -27,12 +28,14 @@ psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
 # set R values to cycle over:
 
 R_min <- 0
-R_max <- 2
-R_step <- 0.5
+R_max <- 1.3
+R_step <- 0.1
 
 # PDF output settings:
-output_PDF <- TRUE
-pdf_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
+output_bar_PDF <- FALSE
+output_line_PDF <- TRUE
+pdf_bar_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
+pdf_line_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/lines.pdf"
 
 # this script assumes that the following parameters are the same for every
 # location; in reality this may not be accurate. an update may be made that
@@ -179,8 +182,8 @@ for (i in 1:nrow(results)) {
 #
 ###################################
 
-if (output_PDF) {
-  pdf(pdf_filepath)
+if (output_bar_PDF) {
+  pdf(pdf_bar_filepath)
   
   this_row_locs <- vector(mode = "character", length = length(locs))
   
@@ -205,4 +208,20 @@ if (output_PDF) {
   }
   
   dev.off()
+}
+
+if (output_line_PDF) {
+  line1 <- ggplot(data = results, aes(x = v1, y = theta_v1)) +
+    geom_point()
+  
+  line2 <- ggplot(data = results, aes(x = v2, y = theta_v2)) +
+    geom_point()
+  
+  line3 <- ggplot(data = results, aes(x = v3, y = theta_v3)) +
+    geom_point()
+  
+  line4 <- ggplot(data = results, aes(x = v4, y = theta_v4)) +
+    geom_point()
+  
+  grid.arrange(line1, line2, line3, line4, nrow = 2)
 }

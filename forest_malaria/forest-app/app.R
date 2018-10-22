@@ -40,7 +40,8 @@ ui <- fluidPage(
                                          value = 1/200,
                                          min = 0)),
                
-               mainPanel(DTOutput(outputId = "constants_table")))
+               mainPanel(DTOutput(outputId = "constants_table",
+                                  width = "35%")))
              ),
     
     tabPanel("Parameters",
@@ -56,8 +57,10 @@ ui <- fluidPage(
                                                  "text/comma-separated-values,text/plain",
                                                  ".csv"))),
                
-               mainPanel(dataTableOutput(outputId = "params_table"),
-                         dataTableOutput(outputId = "psi_table"))
+               mainPanel(dataTableOutput(outputId = "params_table",
+                                         width = "35%"),
+                         dataTableOutput(outputId = "psi_table",
+                                         width = "50%"))
              )
              ),
     
@@ -85,9 +88,10 @@ ui <- fluidPage(
                  h3("If you are satisfied with simulation setup, press GO:"),
                  actionButton(inputId = "go_button",
                               label = "GO",
-                              width = "100%"),
-                 downloadButton(outputId = "download_button",
-                                label = "Download Results")),
+                              width = "100%")
+                 # downloadButton(outputId = "download_button",
+                 #                label = "Download Results")
+                 ),
                
                mainPanel(
                  dataTableOutput(outputId = "results_table")
@@ -164,14 +168,14 @@ server <- function(input, output) {
     ))
   })
   
-  output$download_button <- downloadHandler(
-    filename = function() {
-      "simulation_results.csv"
-    },
-    content = function(file) {
-      write.csv(results, file, row.names = FALSE)
-    }
-  )
+  # output$download_button <- downloadHandler(
+  #   filename = function() {
+  #     "simulation_results.csv"
+  #   },
+  #   content = function(file) {
+  #     write.csv(results, file, row.names = FALSE)
+  #   }
+  # )
 }
 
 shinyApp(ui = ui, server = server)

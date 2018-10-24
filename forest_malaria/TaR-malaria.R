@@ -22,14 +22,15 @@ require(gridExtra, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
 # specify filepaths for parameter .csv files:
 
-params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/params.csv"
-psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi.csv"
+params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/params.csv"
+psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/psi.csv"
+r_values_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/r_values.csv"
 
 # set R values to cycle over:
 
-R_min <- 0
-R_max <- 1.3
-R_step <- 0.1
+# R_min <- 0
+# R_max <- 2
+# R_step <- 0.5
 
 # PDF output settings:
 output_bar_PDF <- FALSE
@@ -130,12 +131,16 @@ find_roots <- function(R,
 #
 ###################################
 
-all_R_values <- seq(R_min, R_max, R_step)
+# all_R_values <- seq(R_min, R_max, R_step)
+
+all_R_values <- as.data.table(read.csv(r_values_path))
 
 list_of_R_values <- list(NULL)
 
 for (i in 1:length(locs)) {
-  list_of_R_values[[i]] <- all_R_values
+  list_of_R_values[[i]] <- seq(all_R_values[id == locs[i]]$R_min,
+                               all_R_values[id == locs[i]]$R_max,
+                               all_R_values[id == locs[i]]$R_step)
   
   names(list_of_R_values)[i] <- locs[i]
 }

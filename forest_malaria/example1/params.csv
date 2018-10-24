@@ -1,0 +1,9 @@
+id,H,
+v1_f,2000,v <--> f
+v1_v,5000,v_only
+v2_f,2000,v <--> f
+v2_v,5000,v_only
+v3_f,2000,v <--> f
+v3_v,5000,v_only
+v4_f,300,v <--> f
+v4_v,1000,v_only

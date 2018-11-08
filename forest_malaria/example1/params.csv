@@ -1,9 +1,11 @@
 id,H,
-v1_f,2000,v <--> f
-v1_v,5000,v_only
-v2_f,2000,v <--> f
-v2_v,5000,v_only
-v3_f,2000,v <--> f
-v3_v,5000,v_only
-v4_f,300,v <--> f
-v4_v,1000,v_only
+v1_f,11,v <--> f
+v1_v,47,v_only
+v2_f,13,v <--> f
+v2_v,43,v_only
+v3_f,17,v <--> f
+v3_v,41,v_only
+v4_f,19,v <--> f
+v4_v,37,v_only
+v5_f,23,v <--> f
+v5_v,31,v_only

@@ -76,3 +76,6 @@ generate_psi <- function(n_f, n_v, forest_max) {
   
   return(psi)
 }
+
+write.csv(psi, file = "/homes/georgoff/georgoff.github.io/forest_malaria/psi_files/psi_1.csv",
+          row.names = FALSE)

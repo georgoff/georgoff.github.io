@@ -23,7 +23,8 @@ require(gridExtra, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 # specify filepaths for parameter .csv files:
 
 params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/params.csv"
-psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/psi.csv"
+# psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/psi.csv"
+psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi_files/psi_1.csv"
 r_values_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/r_values.csv"
 
 # set R values to cycle over:
@@ -34,7 +35,7 @@ r_values_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/r_v
 
 # PDF output settings:
 output_bar_PDF <- FALSE
-output_line_PDF <- TRUE
+output_line_PDF <- FALSE
 pdf_bar_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
 pdf_line_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/lines.pdf"
 
@@ -130,7 +131,7 @@ find_roots <- function(R,
 # Set up results table
 #
 ###################################
-
+ 
 # all_R_values <- seq(R_min, R_max, R_step)
 
 all_R_values <- as.data.table(read.csv(r_values_path))

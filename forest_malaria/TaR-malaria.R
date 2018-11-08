@@ -36,7 +36,7 @@ r_values_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/r_v
 # PDF output settings:
 output_bar_PDF <- FALSE
 output_line_PDF <- FALSE
-pdf_bar_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/test2.pdf"
+pdf_bar_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/bar.pdf"
 pdf_line_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/lines.pdf"
 
 # this script assumes that the following parameters are the same for every
@@ -61,7 +61,7 @@ S <- a/g    # stability index
 
 params <- as.data.table(read.csv(params_path))
 
-n_villages <- nrow(params)
+# n_villages <- nrow(params)
 
 H <- params$H
 X <- vector(mode = "numeric", length = length(H))
@@ -217,17 +217,20 @@ if (output_bar_PDF) {
 }
 
 if (output_line_PDF) {
-  line1 <- ggplot(data = results, aes(x = v1, y = theta_v1)) +
+  line1 <- ggplot(data = results, aes(x = V1, y = theta_V1)) +
     geom_point()
   
-  line2 <- ggplot(data = results, aes(x = v2, y = theta_v2)) +
+  line2 <- ggplot(data = results, aes(x = V2, y = theta_V2)) +
     geom_point()
   
-  line3 <- ggplot(data = results, aes(x = v3, y = theta_v3)) +
+  line3 <- ggplot(data = results, aes(x = V3, y = theta_V3)) +
     geom_point()
   
-  line4 <- ggplot(data = results, aes(x = v4, y = theta_v4)) +
+  line4 <- ggplot(data = results, aes(x = V4, y = theta_V4)) +
     geom_point()
   
-  grid.arrange(line1, line2, line3, line4, nrow = 2)
+  line5 <- ggplot(data = results, aes(x = V5, y = theta_V5)) +
+    geom_point()
+  
+  grid.arrange(line1, line2, line3, line4, line5, nrow = 3)
 }

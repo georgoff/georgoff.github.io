@@ -79,3 +79,30 @@ generate_psi <- function(n_f, n_v, forest_max) {
 
 write.csv(psi, file = "/homes/georgoff/georgoff.github.io/forest_malaria/psi_files/psi_1.csv",
           row.names = FALSE)
+
+# create "answer key"
+# all humans are randomly assigned to a population until they're all filled
+# requires: total # humans, # humans in each population
+population_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/params.csv"
+
+n_v <- 5
+
+pops <- as.data.table(read.csv(population_path))
+pops[, X := NULL]
+
+answers <- as.data.table(matrix(data = 0, nrow = sum(pops$H), ncol = 2))
+names(answers) <- c("human", "group")
+answers$human <- seq(1, sum(pops$H))
+
+for (i in 1:n_v) {
+  random_indices <- sample(which(answers$group == 0),)
+}
+
+# create giant psi matrix
+# rows: one for each human
+# columns: one for each village and forest
+
+# fill out psi matrix
+# look up which village a human belongs to
+# assign a random (very high) p value to that village
+# randomly assign forest p values

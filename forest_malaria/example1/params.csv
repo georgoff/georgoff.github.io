@@ -1,11 +1,11 @@
 id,H,
-v1_f,11,v <--> f
-v1_v,47,v_only
-v2_f,13,v <--> f
-v2_v,43,v_only
-v3_f,17,v <--> f
-v3_v,41,v_only
-v4_f,19,v <--> f
-v4_v,37,v_only
-v5_f,23,v <--> f
-v5_v,31,v_only
+V1-V,47,v_only
+V1-F,11,v <--> f
+V2-V,43,v_only
+V2-F,13,v <--> f
+V3-V,41,v_only
+V3-F,17,v <--> f
+V4-V,37,v_only
+V4-F,19,v <--> f
+V5-V,31,v_only
+V5-F,23,v <--> f

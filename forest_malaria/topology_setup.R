@@ -105,7 +105,17 @@ for (i in 1:nrow(pops)) {
 # create giant psi matrix
 # rows: one for each human
 # columns: one for each village and forest
+psi <- as.data.table(matrix(data = 0, nrow = nrow(answers), ncol = n_v + n_f + 1))
+psi[,1] <- seq(1, nrow(psi))
+names(psi)[1] <- "human"
 
+for (i in 1:n_v) {
+  names(psi)[i+1] <- paste0("V", as.character(i))
+}
+
+for (i in 1:n_f) {
+  names(psi)[i + 1 + n_v] <- paste0("F", as.character(i))
+}
 # fill out psi matrix
 # look up which village a human belongs to
 # assign a random (very high) p value to that village

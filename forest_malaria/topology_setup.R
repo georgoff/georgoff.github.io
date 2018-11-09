@@ -90,12 +90,16 @@ n_v <- 5
 pops <- as.data.table(read.csv(population_path))
 pops[, X := NULL]
 
-answers <- as.data.table(matrix(data = 0, nrow = sum(pops$H), ncol = 2))
-names(answers) <- c("human", "group")
+answers <- as.data.table(matrix(data = 0, nrow = sum(pops$H), ncol = 1))
+names(answers) <- "human"
 answers$human <- seq(1, sum(pops$H))
 
-for (i in 1:n_v) {
-  random_indices <- sample(which(answers$group == 0),)
+answers$group <- vector("character", length = nrow(answers))
+
+for (i in 1:nrow(pops)) {
+  random_indices <- sample(which(answers$group == ""), pops$H[i], replace = FALSE)
+  
+  answers$group[random_indices] <- as.character(pops$id[i])
 }
 
 # create giant psi matrix

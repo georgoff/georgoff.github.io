@@ -116,7 +116,21 @@ for (i in 1:n_v) {
 for (i in 1:n_f) {
   names(psi)[i + 1 + n_v] <- paste0("F", as.character(i))
 }
+
 # fill out psi matrix
 # look up which village a human belongs to
 # assign a random (very high) p value to that village
 # randomly assign forest p values
+
+forest_goers <- psi[grepl("-F", answers$group), human]
+villagers <- psi[grepl("-V", answers$group), human]
+
+for (i in 1:length(forest_goers)) {
+  psi[human == forest_goers[i], (1 + n_v + 1):ncol(psi) := as.list(distribute_travel(n_f, forest_max))]
+}
+
+for (i in villagers) {
+  this_village <- substr(answers$group[i], 1, 2)
+  
+  psi[i, ..this_village] <- 1 - forest_max
+}

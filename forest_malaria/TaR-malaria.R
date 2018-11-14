@@ -23,8 +23,7 @@ require(gridExtra, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 # specify filepaths for parameter .csv files:
 
 params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/params.csv"
-# psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/psi.csv"
-psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/psi_files/psi_1.csv"
+psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/psi.csv"
 r_values_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/r_values.csv"
 
 # set R values to cycle over:

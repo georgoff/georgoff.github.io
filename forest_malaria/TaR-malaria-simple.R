@@ -25,12 +25,12 @@ require(ggplot2)
 ###################################
 
 R_v_min <- 0
-R_v_max <- 5
-R_v_step_size <- 0.1
+R_v_max <- 10
+R_v_step_size <- 0.5
 
 R_f_min <- 0
-R_f_max <- 5
-R_f_step_size <- 0.1
+R_f_max <- 10
+R_f_step_size <- 0.5
 
 make_surface <- T
 make_heatmap <- T
@@ -49,7 +49,7 @@ r <- 1/200 # rate that humans recover from an infection
 n <- 12 # time for sporogonic cycle
 S <- a/g # stability index
 
-p <- 0.3
+p <- 0.4
 
 ###################################
 #
@@ -182,7 +182,7 @@ if (make_heatmap) {
                      z = results$theta_v,
                      type = "heatmap",
                      height = 800, width = 960) %>%
-    layout(title = "Equilibrium Prevalence in Village as a Function of R_0 in Village and Forest",
+    layout(title = paste0("Equilibrium Prevalence in Village as a Function of R in Village and Forest      p = ", p),
            titlefont = list(size = 16),
            xaxis = list(title = "R_0 Value, Village",
                         titlefont = list(size = 20)),
@@ -193,8 +193,8 @@ if (make_heatmap) {
 }
 
 if (make_surface) {
-  results$thresh <- "malaria!"
-  results$thresh[which(results$theta_v < 0.00001)] <- "no malaria"
+  results$thresh <- "Malaria"
+  results$thresh[which(results$theta_v < 0.00001)] <- "No Malaria"
   results$thresh[which(results$R_0_v < 1 & results$R_0_f < 1)] <- "SAFE ZONE"
   
   surface <- plot_ly(data = results,
@@ -206,10 +206,10 @@ if (make_surface) {
                 type = "scatter3d") %>%
     add_markers() %>%
     layout(
-      title = "Malaria Prevalence in the Village as a Function of R_0",
+      title = paste0("Malaria Prevalence in the Village as a Function of R\np = ", p),
       scene = list(
-        xaxis = list(title = "R_0, Village"),
-        yaxis = list(title = "R_0, Forest"),
+        xaxis = list(title = "R, Village"),
+        yaxis = list(title = "R, Forest"),
         zaxis = list(title = "Village Malaria Prevalence")
       )
     )

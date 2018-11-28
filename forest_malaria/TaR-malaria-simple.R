@@ -25,12 +25,12 @@ require(ggplot2)
 ###################################
 
 R_v_min <- 0
-R_v_max <- 10
-R_v_step_size <- 0.5
+R_v_max <- 5
+R_v_step_size <- 0.1
 
 R_f_min <- 0
-R_f_max <- 10
-R_f_step_size <- 0.5
+R_f_max <- 5
+R_f_step_size <- 0.1
 
 make_surface <- T
 make_heatmap <- T
@@ -181,6 +181,7 @@ if (make_heatmap) {
                      y = results$R_0_f,
                      z = results$theta_v,
                      type = "heatmap",
+                     # colors = colorRamp(c("green", "red")),
                      height = 800, width = 960) %>%
     layout(title = paste0("Equilibrium Prevalence in Village as a Function of R in Village and Forest      p = ", p),
            titlefont = list(size = 16),
@@ -193,16 +194,16 @@ if (make_heatmap) {
 }
 
 if (make_surface) {
-  results$thresh <- "Malaria"
-  results$thresh[which(results$theta_v < 0.00001)] <- "No Malaria"
-  results$thresh[which(results$R_0_v < 1 & results$R_0_f < 1)] <- "SAFE ZONE"
+  results$thresh <- "Malaria in Village"
+  results$thresh[which(results$theta_v < 0.00001)] <- "No Malaria in Village"
+  results$thresh[which(results$R_0_v < 1 & results$R_0_f < 1)] <- "Both R Values Below 0"
   
   surface <- plot_ly(data = results,
                 x = ~R_0_v,
                 y = ~R_0_f,
                 z = ~theta_v,
                 color = ~thresh,
-                colors = c("red", "blue", "purple"),
+                colors = c("purple", "red", "blue"),
                 type = "scatter3d") %>%
     add_markers() %>%
     layout(

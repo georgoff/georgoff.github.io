@@ -13,10 +13,10 @@ rm(list = ls())
 # require(data.table)
 # require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
-require(rootSolve)
-require(data.table)
-require(plotly)
-require(ggplot2)
+require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
 ###################################
 #

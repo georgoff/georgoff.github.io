@@ -1,11 +1,3 @@
-library(RColorBrewer)
-colN <- 20
-
-qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-pie(rep(1,colN), col=sample(col_vector, colN))
-
-
 makeVCrel = function(pattern="sin", Nyr = 5, showit=FALSE){
   VC = switch(pattern, 
               sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0), 
@@ -14,19 +6,13 @@ makeVCrel = function(pattern="sin", Nyr = 5, showit=FALSE){
   VC = VC/mean(VC)
   VCrel = rep(VC, Nyr)
   
-  if(showit == TRUE) 
+  if(showit == TRUE){
     plot(1:(365*Nyr)/365, VCrel, type = "l", xlab = "Year", 
          ylim = c(0, max(VCrel)), ylab = "Seasonal Pattern")
-  VCrel
+  }
+    
+  return(VCrel)
 }
-
-
-VCrel = makeVCrel(pattern="sin", Nyr = 10, showit=TRUE)
-VCrel = makeVCrel(pattern="block", showit=TRUE)
-
-
-
-
 
 makeVCtime = function(EIP=12, p=.9, a=.3, tol = 0.001, plot=FALSE){
   # EIP: Entomological Innoculation Rate - time until mosquitoes become infectious
@@ -66,13 +52,6 @@ plotVCtime = function(VCtime, EIP){
   text(EIP, .1, "EIP")
 }
 
-
-VCtime = makeVCtime(plot=TRUE)
-
-
-
-
-
 makeDtime = function(D=38, plot=FALSE){
   # Human Transmission Capacity (HTC)
   
@@ -85,10 +64,6 @@ makeDtime = function(D=38, plot=FALSE){
     plot(1:365, Dtime[1:365]/max(Dtime), type = "l", ylab = expression(D(t)), xlab = "Time (Days)")
   D*Dtime/sum(Dtime)
 }
-Dtime = makeDtime(plot=TRUE) 
-
-
-
 
 makeRtime = function(Re = 1, VCtime=makeVCtime(), Dtime=makeDtime(), plot=FALSE){
   # vector of integers with length 1 year plus length of HTC
@@ -126,22 +101,28 @@ makeRtime = function(Re = 1, VCtime=makeVCtime(), Dtime=makeDtime(), plot=FALSE)
   Rtime
 }
 
-Rtime = makeRtime(2, plot=TRUE)
-
-
-
-
-
-plot(1:365, Rtime/max(Rtime), type = "l", col = "purple")
-lines(1:length(VCtime), VCtime/max(VCtime), col="darkblue")
-lines(1:365, Dtime[1:365]/max(Dtime), col="darkred")
-
-
-
-
-
-# make seasonal VC pattern for 10 years, sine wave
-VCrel = makeVCrel("sin", Nyr=10)
+# TODO: make this more customizable:
+generations_graph <- function(Re, num_gen, Rtime, VCrel) {
+  colN <- 20
+  
+  qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+  col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+  # pie(rep(1,colN), col=sample(col_vector, colN))
+  
+  Rtime = Re*Rtime/sum(Rtime)
+  RRe = sum(Rtime)
+  plot(1:length(VCrel), 8*VCrel/max(VCrel), type = "l", lwd=1, col = grey(0.5),
+       ylim = c(0,9), ylab = "", yaxt = "n", xaxt = "n", xlab = "Time (Years)",
+       main = paste0(as.character(num_gen), " Generations"))
+  axis(1, c(0:10)*365, c(0:10))
+  segments(1,0,1,1)
+  genN = c(0,1, rep(0,3648))
+  
+  for(i in 1:num_gen){
+    genN = nextGen(genN, Rtime, VCrel, yoffset=i/6, mag=3.5, clr=col_vector[i%%colN +1], norm=TRUE, flr=0.008)
+    RRe = c(RRe, sum(genN))
+  } 
+}
 
 nextGen = function(gen, Rtime, VCrel, clr = "black", yoffset=0, mag=1, norm = FALSE, flr= .005){
   L = length(Rtime)
@@ -161,33 +142,7 @@ nextGen = function(gen, Rtime, VCrel, clr = "black", yoffset=0, mag=1, norm = FA
   if(norm == FALSE)
     lines(c(1:3650)[ix], mag*genN[ix]+yoffset, col = clr)
   genN
-} 
-
-
-Re=3
-Rtime = Re*Rtime/sum(Rtime)
-RRe = sum(Rtime)
-plot(1:3650, 8*VCrel/max(VCrel), type = "l", lwd=1, col = grey(0.5), ylim = c(0,9), ylab = "", yaxt = "n", xaxt = "n", xlab = "Time (Years)", main = "40 Generations")
-axis(1, c(0:10)*365, c(0:10))
-segments(1,0,1,1)
-genN = c(0,1, rep(0,3648))
-NN = 40 
-
-for(i in 1:NN){
-  genN = nextGen(genN, Rtime, VCrel, yoffset=i/6, mag=3.5, clr=col_vector[i%%colN +1], norm=TRUE, flr=0.008)
-  RRe = c(RRe, sum(genN))
-} 
-
-
-
-
-eigenval = RRe[-1]/RRe[-length(RRe)]
-plot(eigenval[1:30], type = "l")
-
-
-
-
-
+}
 
 nextGen1 = function(gen, Rtime, VCrel, clr = "black", xoffset=0, yoffset=0, mag=.95, lines=FALSE, nextline=FALSE){
   xix = 1:365
@@ -231,14 +186,6 @@ plotEigen = function(NGEN, Rtime, VCrel){
   c(RRe, sum(genN))
   eigs = RRe[-1]/RRe[-length(RRe)]
 }
-eigs = plotEigen(15, Rtime, VCrel)
-
-plot(eigs, type = "l")
-
-
-
-
-
 
 nextGenSeas = function(gen, Rtime, VCrel,norm=FALSE){
   L = length(Rtime)
@@ -283,12 +230,3 @@ generationsPlot = function(gen, Nyr){
   }
   lines(tt, .8*max(tot)*VCrel/max(VCrel), col = grey(0.55))
 }
-
-
-
-
-
-VCrel = makeVCrel(pattern="sin", Nyr=10)
-Rtime = 2.6*Rtime/sum(Rtime)
-genN = c(0,1, rep(0,3648))
-gen = nextGenSeasMat(genN, Rtime, VCrel, Nyr = 10, 48, showit=TRUE)

@@ -98,17 +98,29 @@ ui <- fluidPage(
              )),
     
     tabPanel("PlotEigen",
-             plotOutput("plot_eigen"),
+             sidebarLayout(
+               sidebarPanel(numericInput(inputId = "NGEN",
+                                         label = "Number of Generations",
+                                         value = 15,
+                                         min = 1, max = NA, step = 1),
+                            width = 1),
+               
+               mainPanel(plotOutput("plot_eigen",
+                                    width = "100%"))
+             )),
+    
+    tabPanel("Eigenvalues",
+             plotOutput("eigenvalues"),
              
              hr(),
              
              fluidRow(
                column(2,
-                      numericInput(inputId = ""))
+                      textOutput("gen_message"))
              ))
+
+  
   )
-  
-  
 )
 
 
@@ -136,6 +148,27 @@ server <- function(input, output) {
                       VCrel = makeVCrel(pattern = input$pattern,
                                         Nyr = input$Nyr,
                                         showit = FALSE))
+  })
+  
+  output$plot_eigen <- renderPlot({
+    plotEigen(NGEN = input$NGEN,
+              Rtime = makeRtime(input$Re, plot = FALSE),
+              VCrel = makeVCrel(pattern = input$pattern,
+                                Nyr = input$Nyr,
+                                showit = FALSE))
+  })
+  
+  output$eigenvalues <- renderPlot({
+    plot(plotEigen(NGEN = input$NGEN,
+                   Rtime = makeRtime(input$Re, plot = FALSE),
+                   VCrel = makeVCrel(pattern = input$pattern,
+                                     Nyr = input$Nyr,
+                                     showit = FALSE)),
+         type = "l")
+  })
+  
+  output$gen_message <- renderText({
+    paste0("Number of Generations = ", input$NGEN)
   })
   
 }

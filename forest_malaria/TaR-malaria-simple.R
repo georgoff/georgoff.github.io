@@ -25,15 +25,16 @@ require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 ###################################
 
 R_v_min <- 0
-R_v_max <- 5
-R_v_step_size <- 0.1
+R_v_max <- 3
+R_v_step_size <- 0.05
 
 R_f_min <- 0
-R_f_max <- 5
-R_f_step_size <- 0.1
+R_f_max <- 3
+R_f_step_size <- 0.05
 
 make_surface <- T
-make_heatmap <- T
+make_binary_heatmap <- T
+make_continuous_heatmap <- T
 
 ###################################
 #
@@ -176,18 +177,39 @@ for (v in R_0_v_values) {
   }
 }
 
-if (make_heatmap) {
+# create binary results variable:
+results$theta_v_binary <- 0
+results[theta_v > 0.0001, theta_v_binary := 1]
+
+if (make_binary_heatmap) {
+  heatmap <- plot_ly(x = results$R_0_v,
+                     y = results$R_0_f,
+                     z = results$theta_v_binary,
+                     type = "heatmap",
+                     colors = colorRamp(c("green", "red")),
+                     height = 800, width = 960) %>%
+    layout(title = paste0("Equilibrium Prevalence in Village as a Function of R in Village and Forest      p = ", p),
+           titlefont = list(size = 16),
+           xaxis = list(title = "R Value, Village",
+                        titlefont = list(size = 20)),
+           yaxis = list(title = "R Value, Forest",
+                        titlefont = list(size = 20)))
+  
+  heatmap
+}
+
+if (make_continuous_heatmap) {
   heatmap <- plot_ly(x = results$R_0_v,
                      y = results$R_0_f,
                      z = results$theta_v,
                      type = "heatmap",
-                     # colors = colorRamp(c("green", "red")),
+                     colors = colorRamp(c("green", "red")),
                      height = 800, width = 960) %>%
     layout(title = paste0("Equilibrium Prevalence in Village as a Function of R in Village and Forest      p = ", p),
            titlefont = list(size = 16),
-           xaxis = list(title = "R_0 Value, Village",
+           xaxis = list(title = "R Value, Village",
                         titlefont = list(size = 20)),
-           yaxis = list(title = "R_0 Value, Forest",
+           yaxis = list(title = "R Value, Forest",
                         titlefont = list(size = 20)))
   
   heatmap
@@ -222,12 +244,12 @@ if (make_surface) {
 # my_plot <- ggplot(data = results) +
 #   geom_raster(aes(x = R_0_v, y = R_0_f, fill = theta_v)) +
 #   scale_fill_gradientn(colours = c("blue", "red")) +
-#   
+# 
 #   # geom_point(data = results[theta_v > 0.01 & theta_v < 0.1],
 #   #            aes(x = R_0_v, y = R_0_f)) +
-#   
+# 
 #   geom_segment(aes(x = 0, xend = 1, y = 1, yend = 1, color = "yellow")) +
-#   
+# 
 #   labs(title = paste0("Equilibrium Village Prevalence of Malaria \n", "p = ", p),
 #        x = "R_0 Value in Village",
 #        y = "R_0 Value in Forest")

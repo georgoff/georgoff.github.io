@@ -1,8 +1,18 @@
+colN <- 20
+
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+global_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+
 makeVCrel = function(pattern="sin", Nyr = 5, showit=FALSE){
-  VC = switch(pattern, 
-              sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0), 
-              sin1 = 1.1 + cos (2*pi*c(1:365)/365), 
-              block = c(rep(2,183), rep(.1,182)))
+  if(pattern %in% c("sin", "sin1", "block")) {
+    VC = switch(pattern, 
+                sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0), 
+                sin1 = 1.1 + cos (2*pi*c(1:365)/365), 
+                block = c(rep(2,183), rep(.1,182)))
+  }
+  else {
+    VC = pattern
+  }
   VC = VC/mean(VC)
   VCrel = rep(VC, Nyr)
   
@@ -13,6 +23,8 @@ makeVCrel = function(pattern="sin", Nyr = 5, showit=FALSE){
     
   return(VCrel)
 }
+
+# sparse_seasonal_input = function(file)
 
 makeVCtime = function(EIP=12, p=.9, a=.3, tol = 0.001, plot=FALSE){
   # EIP: Entomological Innoculation Rate - time until mosquitoes become infectious
@@ -102,12 +114,12 @@ makeRtime = function(Re = 1, VCtime=makeVCtime(), Dtime=makeDtime(), plot=FALSE)
 }
 
 # TODO: make this more customizable:
-generations_graph <- function(Re, num_gen, Rtime, VCrel) {
-  colN <- 20
-  
-  qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-  col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-  # pie(rep(1,colN), col=sample(col_vector, colN))
+generations_graph <- function(Re, num_gen, Rtime, VCrel, col_vector = global_col_vector) {
+  # colN <- 20
+  # 
+  # qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+  # col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+  # # pie(rep(1,colN), col=sample(col_vector, colN))
   
   Rtime = Re*Rtime/sum(Rtime)
   RRe = sum(Rtime)
@@ -159,7 +171,7 @@ nextGen1 = function(gen, Rtime, VCrel, clr = "black", xoffset=0, yoffset=0, mag=
   genN
 }
 
-plotEigen = function(NGEN, Rtime, VCrel){
+plotEigen = function(NGEN, Rtime, VCrel, col_vector = global_col_vector){
   
   plot(1:365,NGEN+2+.95*(VCrel[1:365]/max(VCrel[1:365])), lwd=2, type = "l", ylim = c(0,NGEN+2.5), col = "darkblue", xaxt = "n", xlab = "Month of Year", ylab = "Seasonal Pattern by Generation", yaxt = "n", main = "Generations               ")
   segments(0,NGEN+2,0,NGEN+2.95, lwd=2)
@@ -210,7 +222,7 @@ nextGenSeasMat = function(gen, Rtime, VCrel, Nyr, NN=40, norm=FALSE, showit=TRUE
   gen
 }
 
-generationsPlot = function(gen, Nyr){
+generationsPlot = function(gen, Nyr, col_vector = global_col_vector){
   tot = colSums(gen[-1,], na.rm=T)
   tt = 1:dim(gen)[2]
   plot(tt, tot, type = "l", xaxt = "n", xlab = "Time (Years)", ylab = "Generations", ylim = c(0,1.15*max(tot, na.rm=T))) 

@@ -17,10 +17,16 @@ ui <- fluidPage(
                       h4("Select Shape"),
                       radioButtons(inputId = "pattern",
                                    label = "Shape",
-                                   choices = c("sin", "sin1", "block"))),
+                                   choices = c("sin", "sin1", "block", "Upload Seasonal Signal File"))),
                
                column(2,
-                      h4("Enter Number of Years"),
+                      fileInput(inputId = "pattern_file",
+                                label = "Input Seasonal Signal File"),
+                      
+                      hr(),
+                      helpText("Seasonal Signal File must be a .csv of daily values over the course of a year (365 days)")),
+               
+               column(2,
                       numericInput(inputId = "Nyr",
                                    label = "Number of Years",
                                    value = 5,
@@ -106,7 +112,8 @@ ui <- fluidPage(
                             width = 1),
                
                mainPanel(plotOutput("plot_eigen",
-                                    width = "100%"))
+                                    width = "100%",
+                                    height = "1000px"))
              )),
     
     tabPanel("Eigenvalues",
@@ -126,7 +133,16 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   output$seasonality_plot <- renderPlot({
-    makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    if(input$pattern != "Upload Seasonal Signal File") {
+      makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      makeVCrel(pattern = user_pattern[,1],
+                Nyr = input$Nyr,
+                showit = TRUE)
+    }
   })
   
   output$VCtime_plot <- renderPlot({
@@ -142,29 +158,54 @@ server <- function(input, output) {
   })
   
   output$generations_graph <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      this_VCrel <- makeVCrel(pattern = user_pattern[,1],
+                Nyr = input$Nyr,
+                showit = TRUE)
+    }
     generations_graph(Re = input$Re,
                       num_gen = input$num_gen,
                       Rtime = makeRtime(input$Re, plot = FALSE),
-                      VCrel = makeVCrel(pattern = input$pattern,
-                                        Nyr = input$Nyr,
-                                        showit = FALSE))
+                      VCrel = this_VCrel)
   })
   
   output$plot_eigen <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      this_VCrel <- makeVCrel(pattern = user_pattern[,1],
+                              Nyr = input$Nyr,
+                              showit = TRUE)
+    }
     plotEigen(NGEN = input$NGEN,
               Rtime = makeRtime(input$Re, plot = FALSE),
-              VCrel = makeVCrel(pattern = input$pattern,
-                                Nyr = input$Nyr,
-                                showit = FALSE))
+              VCrel = this_VCrel)
   })
   
   output$eigenvalues <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      this_VCrel <- makeVCrel(pattern = user_pattern[,1],
+                              Nyr = input$Nyr,
+                              showit = TRUE)
+    }
     plot(plotEigen(NGEN = input$NGEN,
                    Rtime = makeRtime(input$Re, plot = FALSE),
-                   VCrel = makeVCrel(pattern = input$pattern,
-                                     Nyr = input$Nyr,
-                                     showit = FALSE)),
-         type = "l")
+                   VCrel = this_VCrel),
+         type = "l",
+         ylab = "Eigenvalue")
   })
   
   output$gen_message <- renderText({

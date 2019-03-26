@@ -1,0 +1,55 @@
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="generator" content="R package animation 2.5">
+	<title>Animations Using the R Language</title>
+	<link rel="stylesheet" href="css/reset.css" />
+	<link rel="stylesheet" href="css/styles.css" />
+	<link rel="stylesheet" href="css/scianimator.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/styles/github.min.css">
+
+	<script src="js/jquery-1.4.4.min.js"></script>
+	<script src="js/jquery.scianimator.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/languages/r.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+</head>
+<body>
+
+	<div class="scianimator"><div id="test_animation" style="display: inline-block;"></div></div>
+	<div class="scianimator" style="width: 480px; text-align: left"><pre><code class="r">## Animations generated in R version 3.5.0 (2018-04-23)
+##   using the package animation
+library(animation)
+library(geosphere)
+library(chron)
+library(scales)
+library(leaflet)
+library(readr)
+library(raster)
+library(rgdal)
+library(sp)
+library(bindrcpp)
+library(plotly)
+library(ggplot2)
+library(data.table)
+library(rootSolve)
+library(devtools)
+library(RColorBrewer)
+library(shiny)
+for (i in seq(1, nrow(data_long_move), by = 1)) {
+    plot(data_long_move[1:i, lat], data_long_move[1:i, lon], 
+        xlim = c(min(data[, lat]), max(data[, lat])), ylim = c(min(data[, 
+            lon]), max(data[, lon])), type = "l")
+    ani.pause(0.05)
+}
+## R version 3.5.0 (2018-04-23)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Other packages: animation 2.5, geosphere 1.5-7, chron 2.3-52, scales 0.5.0, leaflet 2.0.0, readr 1.1.1, raster 2.6-7, rgdal
+## 1.2-18, sp 1.2-7, bindrcpp 0.2.2, plotly 4.7.1, ggplot2 2.2.1, data.table 1.10.4-3, rootSolve 1.7, devtools 1.13.5, RColorBrewer
+## 1.1-2, shiny 1.0.5</code></pre></div>
+	<script src="js/test_animation.js"></script>
+<!-- highlight R code -->
+
+</body>
+</html>

@@ -1,12 +1,11 @@
-library("foreign")
-library(MASS)
-setwd("/Volumes/lvc32/PhD/Malaria/PLoS Bio Submit/Data")
+# library("foreign", lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+# library(MASS)
 #Load data
-trap_data<-read.dta("CDC light trap data through March 2015.dta")
+trap_data<-read.dta(paste0(directory, "inputs/CDC light trap data through March 2015.dta"))
 # Weights from Su
-tororo_weights<-read.table("Biting_weight_Tororo.txt")
-kanungu_weights<-read.table("Biting_weight_Kanungu.txt")
-jinja_weights<-read.table("Biting_weight_Jinja.txt")
+tororo_weights<-read.table(paste0(directory, "inputs/Biting_weight_Tororo.txt"))
+kanungu_weights<-read.table(paste0(directory, "inputs/Biting_weight_Kanungu.txt"))
+jinja_weights<-read.table(paste0(directory, "inputs/Biting_weight_Jinja.txt"))
 weights<-rbind.data.frame(tororo_weights,kanungu_weights,jinja_weights)
 
 #Fix months
@@ -158,7 +157,7 @@ data<-merge(data,weights,by.x="hhid",by.y="uhhid")
 
 data<-data[,c("siteid","hhid","date","monthyear","month","year","hbd","numbertested","numberpositive","modeled_eir","hid","weight")]
 
-write.csv(data,"Obs_all.csv")
+write.csv(data, paste0(directory, "outputs/Obs_all.csv"))
 
 signif(tapply(data$hbd>50,data$siteid,mean)*100,2)
 tapply(data$hbd>50,data$siteid,sum)

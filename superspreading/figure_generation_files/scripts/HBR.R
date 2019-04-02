@@ -1,5 +1,4 @@
-setwd("/Volumes/lvc32/PhD/Malaria/PLoS Bio Submit")
-data<-read.csv("Data/Obs_all.csv")
+data<-read.csv(paste0(directory, "outputs/Obs_all.csv"))
 
 # Calculate within-household variance and mean
 var<-tapply(data$hbd,data$hhid,var,na.rm=T)
@@ -7,7 +6,7 @@ mean<-tapply(data$hbd,data$hhid,mean,na.rm=T)
 site<-tapply(as.character(data$siteid),data$hhid,unique)
 by_hh<-cbind.data.frame(var,mean,site)
 
-library(RColorBrewer)
+# library(RColorBrewer)
 red<-brewer.pal(4,"Reds")[3]
 green<-brewer.pal(4,"Greens")[3]
 blue<-brewer.pal(4,"Blues")[3]

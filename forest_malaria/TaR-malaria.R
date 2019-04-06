@@ -8,11 +8,15 @@
 
 rm(list = ls())
 
-require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(gridExtra, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+list.of.packages <- c("rootSolve", "data.table", "plotly", "ggplot2", "gridExtra")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+require(rootSolve)
+require(data.table)
+require(plotly)
+require(ggplot2)
+require(gridExtra)
 
 ###################################
 #
@@ -22,21 +26,17 @@ require(gridExtra, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 
 # specify filepaths for parameter .csv files:
 
-params_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/params.csv"
-psi_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/psi.csv"
-r_values_path <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/r_values.csv"
+params_path <- "H:/georgoff.github.io/forest_malaria/example1/params.csv"
+psi_path <- "H:/georgoff.github.io/forest_malaria/example1/psi.csv"
+r_values_path <- "H:/georgoff.github.io/forest_malaria/example1/r_values.csv"
 
-# set R values to cycle over:
-
-# R_min <- 0
-# R_max <- 2
-# R_step <- 0.5
-
-# PDF output settings:
+# Output settings:
+output_csv <- TRUE
 output_bar_PDF <- FALSE
 output_line_PDF <- FALSE
-pdf_bar_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/example1/bar.pdf"
-pdf_line_filepath <- "/homes/georgoff/georgoff.github.io/forest_malaria/lines.pdf"
+csv_filepath <- "H:/georgoff.github.io/forest_malaria/example1/results.csv"
+pdf_bar_filepath <- "H:/georgoff.github.io/forest_malaria/example1/bar.pdf"
+pdf_line_filepath <- "H:/georgoff.github.io/forest_malaria/lines.pdf"
 
 # this script assumes that the following parameters are the same for every
 # location; in reality this may not be accurate. an update may be made that
@@ -183,6 +183,16 @@ for (i in 1:nrow(results)) {
 
 ###################################
 #
+# Create .csv of results
+#
+###################################
+
+if (output_csv) {
+  write.csv(results, file = csv_filepath)
+}
+
+###################################
+#
 # Create PDF of results
 #
 ###################################
@@ -192,7 +202,7 @@ if (output_bar_PDF) {
   
   this_row_locs <- vector(mode = "character", length = length(locs))
   
-  for (j in 1:500) {
+  for (j in 1:nrow(results)) {
     for (location in 1:length(locs)) {
       this_row_locs[location] <- paste0(locs[location],
                                         "\nR = ",
@@ -215,21 +225,24 @@ if (output_bar_PDF) {
   dev.off()
 }
 
-if (output_line_PDF) {
-  line1 <- ggplot(data = results, aes(x = V1, y = theta_V1)) +
-    geom_point()
-  
-  line2 <- ggplot(data = results, aes(x = V2, y = theta_V2)) +
-    geom_point()
-  
-  line3 <- ggplot(data = results, aes(x = V3, y = theta_V3)) +
-    geom_point()
-  
-  line4 <- ggplot(data = results, aes(x = V4, y = theta_V4)) +
-    geom_point()
-  
-  line5 <- ggplot(data = results, aes(x = V5, y = theta_V5)) +
-    geom_point()
-  
-  grid.arrange(line1, line2, line3, line4, line5, nrow = 3)
-}
+# NOTE: this output functionality was used once for a specific case and will not work for most
+# model parameters.
+
+# if (output_line_PDF) {
+#   line1 <- ggplot(data = results, aes(x = V1, y = theta_V1)) +
+#     geom_point()
+#   
+#   line2 <- ggplot(data = results, aes(x = V2, y = theta_V2)) +
+#     geom_point()
+#   
+#   line3 <- ggplot(data = results, aes(x = V3, y = theta_V3)) +
+#     geom_point()
+#   
+#   line4 <- ggplot(data = results, aes(x = V4, y = theta_V4)) +
+#     geom_point()
+#   
+#   line5 <- ggplot(data = results, aes(x = V5, y = theta_V5)) +
+#     geom_point()
+#   
+#   grid.arrange(line1, line2, line3, line4, line5, nrow = 3)
+# }

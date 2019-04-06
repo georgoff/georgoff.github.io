@@ -1,11 +1,15 @@
 # Initialization
 rm(list = ls())
 
-require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(geosphere, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(animation, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+list.of.packages <- c("geosphere", "data.table", "animation")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
 
-data_dir <- "/homes/georgoff/georgoff.github.io/forest_malaria/laoPDR_GPS/"
+require(data.table)
+require(geosphere)
+require(animation)
+
+data_dir <- "H:/georgoff.github.io/forest_malaria/laoPDR_GPS/"
 
 # read in data
 load(paste0(data_dir, "GPS_HRP_1st_Cycle_clean.RData"))

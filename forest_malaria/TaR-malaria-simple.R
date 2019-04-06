@@ -9,20 +9,22 @@
 
 rm(list = ls())
 
-# require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-# require(data.table)
-# require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+list.of.packages <- c("rootSolve", "data.table", "plotly", "ggplot2")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
 
-require(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+require(rootSolve)
+require(data.table)
+require(plotly)
+require(ggplot2)
 
 ###################################
 #
 # Choose options
 #
 ###################################
+
+p <- 0.4
 
 R_v_min <- 0
 R_v_max <- 3
@@ -50,15 +52,16 @@ r <- 1/200 # rate that humans recover from an infection
 n <- 12 # time for sporogonic cycle
 S <- a/g # stability index
 
-p <- 0.4
-
 ###################################
 #
 # Establish matrices of variables
 #
 ###################################
 
+# set number of villagers and forest-goers, respectively:
 H <- as.vector(c(5000,2000))
+
+# these don't need to be changed:
 V <- as.vector(c(100,500))
 X <- as.vector(c(0,0))
 Y <- as.vector(c(0,0))

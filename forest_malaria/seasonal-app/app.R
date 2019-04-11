@@ -1,7 +1,7 @@
 library(shiny)
 library(RColorBrewer)
 
-source("H:/georgoff.github.io/forest_malaria/seasonal_R/Seasonal-Reproductive-Numbers-Functions.R")
+source("~/Desktop/georgoff.github.io/forest_malaria/seasonal_R/Seasonal-Reproductive-Numbers-Functions.R")
 
 ui <- fluidPage(
   titlePanel("Seasonality of Reproductive Numbers"),
@@ -17,14 +17,19 @@ ui <- fluidPage(
                         
                         h4("You're about to embark on the journey of a lifetime...")),
                
-               tabPanel("VCrel",
+               tabPanel("Seasonality Signal",
+                        # VCrel
                         plotOutput("seasonality_plot_tutorial"),
                         
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("Welcome to the tutorial. Let the games begin.")),
+                          column(8,
+                                 h4("Defining the Seasonal Signal"),
+                                 h6("First we must decide upon a seasonal signal for relative vectorial capacity.
+                                    This signal defines how strong malaria transmission is during every part of a given year.
+                                    There are a few example options available via the radio buttons to the right; feel free to select each one and examine how the signal changes.
+                                    For this tutorial, we will be using the \"sin\" signal.")),
                           
                           column(2,
                                  h4("Select Shape"),
@@ -39,36 +44,47 @@ ui <- fluidPage(
                                               min = 1, max = NA, step = 1)))
                         ),
                
-               tabPanel("VCtime",
+               tabPanel("Temporal Vectorial Capacity",
+                        # VCtime
                         plotOutput("VCtime_plot_tutorial"),
                         
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("Banging your head against a wall for one hour burns 150 calories."))
+                          column(8,
+                                 h4("Temporal Dispersion of Vectorial Capacity"),
+                                 h6("This graph depicts how vectorial capacity (VC) changes over time.
+                                    After the Entomological Innoculation Period (EIP), which is 12 days in this example, VC starts at its highest value then decreases over time.
+                                    This waiting period is due to the fact that the parasite takes time to mature in the host; therefore, the mosquito doesn't become infectious until after the EIP."))
                         )
                         ),
                
-               tabPanel("Dtime",
+               tabPanel("Temporal Human Infectiousness",
+                        # Dtime
                         plotOutput("Dtime_plot_tutorial"),
                         
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("In Switzerland it is illegal to own just one guinea pig."))
+                          column(8,
+                                 h4("Temporal Dispersion of Human Infectiousness"),
+                                 h6("Similar to vectorial capacity, there is a lag period for infectiousness in humans.
+                                    For this tutorial, we assume a 17 day dormant period before the infected human becomes infectious to mosquitoes that bite them.
+                                    Following this dormant period, the infectiousness curve follows a gamma distribution."))
                         )
                         ),
                
-               tabPanel("Rtime",
+               tabPanel("Temporal Basic Reproductive Rate",
+                        # Rtime
                         plotOutput("Rtime_plot_tutorial"),
                         
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("7% of American adults believe that chocolate milk comes from brown cows."))
+                          column(8,
+                                 h4("Temporal Dispersion of Basic Reproductive Rate"),
+                                 h6("By combining the temporal effects of vectorial capacity and human infectiousness, we arrive at the temporal dispersion of the basic reproductive rate.
+                                    This distribution tells us how strong the transmission capacity is in our system at a given time."))
                         )
                         ),
                
@@ -78,15 +94,18 @@ ui <- fluidPage(
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("Bananas are curved because they grow towards the sun."))
+                          column(8,
+                                 h4("Next-Generation Graph"),
+                                 h6("Gonna have Dave write this part, don't know what's going on here to be honest..."))
                         )
                         ),
                
-               tabPanel("PlotEigen",
+               tabPanel("Long-Term Generations Graph",
+                        # PlotEigen
                         fluidRow(
                           column(3,
-                                 helpText("Most toilets flush in E flat.")),
+                                 h4("Next-Generation Graphs Over Time"),
+                                 h6("Also gonna have Dave write this...")),
                           column(9,
                                  plotOutput("plot_eigen_tutorial",
                                             height = "1000px"))
@@ -99,8 +118,9 @@ ui <- fluidPage(
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("All swans in England belong to the queen."))
+                          column(8,
+                                 h4("Eigenvalues Over Time"),
+                                 h6("This is all Dave."))
                         )
                         ),
                
@@ -110,8 +130,9 @@ ui <- fluidPage(
                         hr(),
                         
                         fluidRow(
-                          column(4,
-                                 helpText("This will ruin your teeth."))
+                          column(8,
+                                 h4("Couldn't even begin to tell you what's going on here"),
+                                 h6("It looks pretty though!"))
                         ))
                
                
@@ -293,11 +314,12 @@ server <- function(input, output) {
   })
   
   output$jawbreaker_tutorial <- renderPlot({
-    VCrel = makeVCrel(pattern="sin", Nyr=10)
-    this_Rtime = makeRtime(Re = 3)
+    # VCrel = makeVCrel(pattern="sin", Nyr=10)
+    this_Rtime = makeRtime(Re = 2)
     this_Rtime = 2.6*this_Rtime/sum(this_Rtime)
     genN = c(0,1, rep(0,3648))
-    gen = nextGenSeasMat(gen = c(0,1, rep(0,3648)),
+    # gen = nextGenSeasMat(genN, Rtime, VCrel, Nyr = 10, 48, showit=TRUE)
+    gen = nextGenSeasMat(genN,
                          Rtime = this_Rtime,
                          VCrel = makeVCrel(pattern = "sin", Nyr = 10),
                          Nyr = 10,

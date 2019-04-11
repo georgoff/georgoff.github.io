@@ -215,14 +215,15 @@ nextGenSeas = function(gen, Rtime, VCrel,norm=FALSE){
 
 nextGenSeasMat = function(gen, Rtime, VCrel, Nyr, NN=40, norm=FALSE, showit=TRUE){
   for(i in 1:NN){
+    genN = c(0,1, rep(0,3648))
     genN = nextGenSeas(genN, Rtime, VCrel, norm)
     gen = rbind(gen, genN)
   }
-  if(showit==TRUE) generationsPlot(gen, Nyr)
+  if(showit==TRUE) generationsPlot(gen, Nyr, VCrel)
   gen
 }
 
-generationsPlot = function(gen, Nyr, col_vector = global_col_vector){
+generationsPlot = function(gen, Nyr, VCrel, col_vector = global_col_vector){
   tot = colSums(gen[-1,], na.rm=T)
   tt = 1:dim(gen)[2]
   plot(tt, tot, type = "l", xaxt = "n", xlab = "Time (Years)", ylab = "Generations", ylim = c(0,1.15*max(tot, na.rm=T))) 

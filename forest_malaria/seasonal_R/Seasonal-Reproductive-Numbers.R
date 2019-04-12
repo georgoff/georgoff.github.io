@@ -1,32 +1,29 @@
-library(RColorBrewer)
-colN <- 20
+### Functions
 
-qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-pie(rep(1,colN), col=sample(col_vector, colN))
-
-
-makeVCrel = function(pattern="sin", Nyr = 5, showit=FALSE){
-  VC = switch(pattern, 
-              sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0), 
-              sin1 = 1.1 + cos (2*pi*c(1:365)/365), 
+makeVCrel = function(pattern="sin", VCes=rep(1,365), Nyr = 5, showit=FALSE){
+  VC = switch(pattern,
+              sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0),
+              sin1 = 1.1 + cos (2*pi*c(1:365)/365),
               block = c(rep(2,183), rep(.1,182)))
   VC = VC/mean(VC)
+  VC = VC/VCes
   VCrel = rep(VC, Nyr)
   
-  if(showit == TRUE) 
-    plot(1:(365*Nyr)/365, VCrel, type = "l", xlab = "Year", 
+  if(showit == TRUE)
+    plot(1:(365*Nyr)/365, VCrel, type = "l", xlab = "Year",
          ylim = c(0, max(VCrel)), ylab = "Seasonal Pattern")
   VCrel
 }
 
-
-VCrel = makeVCrel(pattern="sin", Nyr = 10, showit=TRUE)
-VCrel = makeVCrel(pattern="block", showit=TRUE)
-
-
-
-
+makeVCes = function(pattern = "sig", maxES = 10, timing=0){
+  tt = 1:365
+  VCes = switch(pattern,
+                sig = 1+maxES*(exp(-.02*tt)/(1+exp(-.02*tt))),
+                block = c(rep(maxES, 180), rep(1, 180)),
+                rep(1,365)
+  )
+  c(VCes, VCes)[365+tt-timing]
+}
 
 makeVCtime = function(EIP=12, p=.9, a=.3, tol = 0.001, plot=FALSE){
   # EIP: Entomological Innoculation Rate - time until mosquitoes become infectious
@@ -66,13 +63,6 @@ plotVCtime = function(VCtime, EIP){
   text(EIP, .1, "EIP")
 }
 
-
-VCtime = makeVCtime(plot=TRUE)
-
-
-
-
-
 makeDtime = function(D=38, plot=FALSE){
   # Human Transmission Capacity (HTC)
   
@@ -85,10 +75,6 @@ makeDtime = function(D=38, plot=FALSE){
     plot(1:365, Dtime[1:365]/max(Dtime), type = "l", ylab = expression(D(t)), xlab = "Time (Days)")
   D*Dtime/sum(Dtime)
 }
-Dtime = makeDtime(plot=TRUE) 
-
-
-
 
 makeRtime = function(Re = 1, VCtime=makeVCtime(), Dtime=makeDtime(), plot=FALSE){
   # vector of integers with length 1 year plus length of HTC
@@ -126,23 +112,6 @@ makeRtime = function(Re = 1, VCtime=makeVCtime(), Dtime=makeDtime(), plot=FALSE)
   Rtime
 }
 
-Rtime = makeRtime(2, plot=TRUE)
-
-
-
-
-
-plot(1:365, Rtime/max(Rtime), type = "l", col = "purple")
-lines(1:length(VCtime), VCtime/max(VCtime), col="darkblue")
-lines(1:365, Dtime[1:365]/max(Dtime), col="darkred")
-
-
-
-
-
-# make seasonal VC pattern for 10 years, sine wave
-VCrel = makeVCrel("sin", Nyr=10)
-
 nextGen = function(gen, Rtime, VCrel, clr = "black", yoffset=0, mag=1, norm = FALSE, flr= .005){
   L = length(Rtime)
   xix = 1:L
@@ -162,32 +131,6 @@ nextGen = function(gen, Rtime, VCrel, clr = "black", yoffset=0, mag=1, norm = FA
     lines(c(1:3650)[ix], mag*genN[ix]+yoffset, col = clr)
   genN
 } 
-
-
-Re=3
-Rtime = Re*Rtime/sum(Rtime)
-RRe = sum(Rtime)
-plot(1:3650, 8*VCrel/max(VCrel), type = "l", lwd=1, col = grey(0.5), ylim = c(0,9), ylab = "", yaxt = "n", xaxt = "n", xlab = "Time (Years)", main = "40 Generations")
-axis(1, c(0:10)*365, c(0:10))
-segments(1,0,1,1)
-genN = c(0,1, rep(0,3648))
-NN = 40 
-
-for(i in 1:NN){
-  genN = nextGen(genN, Rtime, VCrel, yoffset=i/6, mag=3.5, clr=col_vector[i%%colN +1], norm=TRUE, flr=0.008)
-  RRe = c(RRe, sum(genN))
-} 
-
-
-
-
-eigenval = RRe[-1]/RRe[-length(RRe)]
-plot(eigenval[1:30], type = "l")
-
-
-
-
-
 
 nextGen1 = function(gen, Rtime, VCrel, clr = "black", xoffset=0, yoffset=0, mag=.95, lines=FALSE, nextline=FALSE){
   xix = 1:365
@@ -231,14 +174,6 @@ plotEigen = function(NGEN, Rtime, VCrel){
   c(RRe, sum(genN))
   eigs = RRe[-1]/RRe[-length(RRe)]
 }
-eigs = plotEigen(15, Rtime, VCrel)
-
-plot(eigs, type = "l")
-
-
-
-
-
 
 nextGenSeas = function(gen, Rtime, VCrel,norm=FALSE){
   L = length(Rtime)
@@ -284,9 +219,51 @@ generationsPlot = function(gen, Nyr){
   lines(tt, .8*max(tot)*VCrel/max(VCrel), col = grey(0.55))
 }
 
+### Code to execute
 
+library(RColorBrewer)
+colN <- 20
 
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+pie(rep(1,colN), col=sample(col_vector, colN))
 
+VCrel = makeVCrel(pattern="sin", Nyr = 10, showit=TRUE)
+VCrel = makeVCrel(pattern="block", showit=TRUE)
+
+VCtime = makeVCtime(plot=TRUE)
+
+Dtime = makeDtime(plot=TRUE) 
+
+Rtime = makeRtime(2, plot=TRUE)
+
+plot(1:365, Rtime/max(Rtime), type = "l", col = "purple")
+lines(1:length(VCtime), VCtime/max(VCtime), col="darkblue")
+lines(1:365, Dtime[1:365]/max(Dtime), col="darkred")
+
+# make seasonal VC pattern for 10 years, sine wave
+VCrel = makeVCrel("sin", Nyr=10)
+
+Re=3
+Rtime = Re*Rtime/sum(Rtime)
+RRe = sum(Rtime)
+plot(1:3650, 8*VCrel/max(VCrel), type = "l", lwd=1, col = grey(0.5), ylim = c(0,9), ylab = "", yaxt = "n", xaxt = "n", xlab = "Time (Years)", main = "40 Generations")
+axis(1, c(0:10)*365, c(0:10))
+segments(1,0,1,1)
+genN = c(0,1, rep(0,3648))
+NN = 40 
+
+for(i in 1:NN){
+  genN = nextGen(genN, Rtime, VCrel, yoffset=i/6, mag=3.5, clr=col_vector[i%%colN +1], norm=TRUE, flr=0.008)
+  RRe = c(RRe, sum(genN))
+} 
+
+eigenval = RRe[-1]/RRe[-length(RRe)]
+plot(eigenval[1:30], type = "l")
+
+eigs = plotEigen(15, Rtime, VCrel)
+
+plot(eigs, type = "l")
 
 VCrel = makeVCrel(pattern="sin", Nyr=10)
 Rtime = 2.6*Rtime/sum(Rtime)

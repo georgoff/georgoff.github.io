@@ -1,5 +1,9 @@
 library(moveVis)
+library(geosphere)
 library(move)
+library(data.table)
+
+rm(list = ls())
 
 data_dir <- "H:/georgoff.github.io/forest_malaria/laoPDR_GPS/"
 
@@ -19,6 +23,8 @@ data[, dist_around := 0]
 data[, dist_back := 0]
 data[, dist_forward := 0]
 
+data <- data[2000:2100,]
+
 for(i in 1:nrow(data)) {
   if(i > 1 & i < nrow(data)) {
     data[i, dist_around := distVincentyEllipsoid(p1 = c(data[i-1, lon], data[i-1, lat]),
@@ -35,12 +41,10 @@ for(i in 1:nrow(data)) {
   }
 }
 
-data <- data[1:100,]
-
-data$time_posix <- as.POSIXct(data[1,time])
+data$time_posix <- as.POSIXct(data[1,time][1], origin = "2000-01-01")
 
 for(i in 1:nrow(data)) {
-  data$time_posix[i] <- as.POSIXct(data[i, time])
+  data$time_posix[i] <- as.POSIXct(data[i, time][1], origin = "2000-01-01")
 }
 
 move_data <- df2move(data,

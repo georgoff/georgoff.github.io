@@ -1,7 +1,7 @@
 library(shiny)
 library(RColorBrewer)
 
-source("~/Desktop/georgoff.github.io/forest_malaria/seasonal_R/Seasonal-Reproductive-Numbers-Functions.R")
+source("/homes/georgoff/georgoff.github.io/forest_malaria/seasonal_R/Seasonal-Reproductive-Numbers-Functions.R")
 
 ui <- fluidPage(
   titlePanel("Seasonality of Reproductive Numbers"),
@@ -260,7 +260,19 @@ ui <- fluidPage(
                         ))
                
                
-             ))
+             )),
+    tabPanel("Interventions",
+             plotOutput("interventions_VC_graph"),
+             
+             hr(),
+             
+             sliderInput(inputId = "intervention_start",
+                         label = "Start Day of Intervention",
+                         min = 1, max = 365, value = 1, step = 1),
+             numericInput(inputId = "intervention_effect_size",
+                          label = "Effect Size of Intervention",
+                          value = 1, min = 0, step = 0.1)
+             )
   )
   
 
@@ -316,6 +328,7 @@ server <- function(input, output) {
   output$jawbreaker_tutorial <- renderPlot({
     # VCrel = makeVCrel(pattern="sin", Nyr=10)
     this_Rtime = makeRtime(Re = 2)
+    this_Rtime = 3*this_Rtime/sum(this_Rtime)
     this_Rtime = 2.6*this_Rtime/sum(this_Rtime)
     genN = c(0,1, rep(0,3648))
     # gen = nextGenSeasMat(genN, Rtime, VCrel, Nyr = 10, 48, showit=TRUE)
@@ -326,85 +339,94 @@ server <- function(input, output) {
                          NN = 48, showit=TRUE)
   })
   
-  # output$seasonality_plot <- renderPlot({
-  #   if(input$pattern != "Upload Seasonal Signal File") {
-  #     makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
-  #   }
-  #   if(input$pattern == "Upload Seasonal Signal File") {
-  #     # create function to sparse file input and create seasonal signal
-  #     user_pattern <- read.csv(input$pattern_file$datapath)
-  #     makeVCrel(pattern = user_pattern[,1],
-  #               Nyr = input$Nyr,
-  #               showit = TRUE)
-  #   }
-  # })
-  # 
-  # output$VCtime_plot <- renderPlot({
-  #   makeVCtime(EIP = input$EIP, p = input$p, a = input$a, tol = input$tol, plot=TRUE)
-  # })
-  # 
-  # output$Dtime_plot <- renderPlot({
-  #   makeDtime(D = input$D, plot=TRUE)
-  # })
-  # 
-  # output$Rtime_plot <- renderPlot({
-  #   makeRtime(input$Re, plot = TRUE)
-  # })
-  # 
-  # output$generations_graph <- renderPlot({
-  #   if(input$pattern != "Upload Seasonal Signal File") {
-  #     this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
-  #   }
-  #   if(input$pattern == "Upload Seasonal Signal File") {
-  #     # create function to sparse file input and create seasonal signal
-  #     user_pattern <- read.csv(input$pattern_file$datapath)
-  #     this_VCrel <- makeVCrel(pattern = user_pattern[,1],
-  #               Nyr = input$Nyr,
-  #               showit = TRUE)
-  #   }
-  #   generations_graph(Re = input$Re,
-  #                     num_gen = input$num_gen,
-  #                     Rtime = makeRtime(input$Re, plot = FALSE),
-  #                     VCrel = this_VCrel)
-  # })
-  # 
-  # output$plot_eigen <- renderPlot({
-  #   if(input$pattern != "Upload Seasonal Signal File") {
-  #     this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
-  #   }
-  #   if(input$pattern == "Upload Seasonal Signal File") {
-  #     # create function to sparse file input and create seasonal signal
-  #     user_pattern <- read.csv(input$pattern_file$datapath)
-  #     this_VCrel <- makeVCrel(pattern = user_pattern[,1],
-  #                             Nyr = input$Nyr,
-  #                             showit = TRUE)
-  #   }
-  #   plotEigen(NGEN = input$NGEN,
-  #             Rtime = makeRtime(input$Re, plot = FALSE),
-  #             VCrel = this_VCrel)
-  # })
-  # 
-  # output$eigenvalues <- renderPlot({
-  #   if(input$pattern != "Upload Seasonal Signal File") {
-  #     this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
-  #   }
-  #   if(input$pattern == "Upload Seasonal Signal File") {
-  #     # create function to sparse file input and create seasonal signal
-  #     user_pattern <- read.csv(input$pattern_file$datapath)
-  #     this_VCrel <- makeVCrel(pattern = user_pattern[,1],
-  #                             Nyr = input$Nyr,
-  #                             showit = TRUE)
-  #   }
-  #   plot(plotEigen(NGEN = input$NGEN,
-  #                  Rtime = makeRtime(input$Re, plot = FALSE),
-  #                  VCrel = this_VCrel),
-  #        type = "l",
-  #        ylab = "Eigenvalue")
-  # })
-  # 
-  # output$gen_message <- renderText({
-  #   paste0("Number of Generations = ", input$NGEN)
-  # })
+  output$seasonality_plot <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      makeVCrel(pattern = user_pattern[,1],
+                Nyr = input$Nyr,
+                showit = TRUE)
+    }
+  })
+
+  output$VCtime_plot <- renderPlot({
+    makeVCtime(EIP = input$EIP, p = input$p, a = input$a, tol = input$tol, plot=TRUE)
+  })
+
+  output$Dtime_plot <- renderPlot({
+    makeDtime(D = input$D, plot=TRUE)
+  })
+
+  output$Rtime_plot <- renderPlot({
+    makeRtime(input$Re, plot = TRUE)
+  })
+
+  output$generations_graph <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      this_VCrel <- makeVCrel(pattern = user_pattern[,1],
+                Nyr = input$Nyr,
+                showit = TRUE)
+    }
+    generations_graph(Re = input$Re,
+                      num_gen = input$num_gen,
+                      Rtime = makeRtime(input$Re, plot = FALSE),
+                      VCrel = this_VCrel)
+  })
+
+  output$plot_eigen <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      this_VCrel <- makeVCrel(pattern = user_pattern[,1],
+                              Nyr = input$Nyr,
+                              showit = TRUE)
+    }
+    plotEigen(NGEN = input$NGEN,
+              Rtime = makeRtime(input$Re, plot = FALSE),
+              VCrel = this_VCrel)
+  })
+
+  output$eigenvalues <- renderPlot({
+    if(input$pattern != "Upload Seasonal Signal File") {
+      this_VCrel <- makeVCrel(pattern = input$pattern, Nyr = input$Nyr, showit=TRUE)
+    }
+    if(input$pattern == "Upload Seasonal Signal File") {
+      # create function to sparse file input and create seasonal signal
+      user_pattern <- read.csv(input$pattern_file$datapath)
+      this_VCrel <- makeVCrel(pattern = user_pattern[,1],
+                              Nyr = input$Nyr,
+                              showit = TRUE)
+    }
+    plot(plotEigen(NGEN = input$NGEN,
+                   Rtime = makeRtime(input$Re, plot = FALSE),
+                   VCrel = this_VCrel),
+         type = "l",
+         ylab = "Eigenvalue")
+  })
+
+  output$gen_message <- renderText({
+    paste0("Number of Generations = ", input$NGEN)
+  })
+  
+  output$interventions_VC_graph <- renderPlot({
+    VCes1 = makeVCes(pattern = "sig",
+                     maxES = input$intervention_effect_size,
+                     timing = input$intervention_start)
+    
+    makeVCrel(VCes = VCes1,
+              showit = TRUE)
+  })
   
 }
 

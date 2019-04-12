@@ -3,25 +3,29 @@ colN <- 20
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 global_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 
-makeVCrel = function(pattern="sin", Nyr = 5, showit=FALSE){
-  if(pattern %in% c("sin", "sin1", "block")) {
-    VC = switch(pattern, 
-                sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0), 
-                sin1 = 1.1 + cos (2*pi*c(1:365)/365), 
-                block = c(rep(2,183), rep(.1,182)))
-  }
-  else {
-    VC = pattern
-  }
+makeVCrel = function(pattern="sin", VCes=rep(1,365), Nyr = 5, showit=FALSE){
+  VC = switch(pattern,
+              sin = pmax(0.5 + cos (2*pi*c(1:365)/365),0),
+              sin1 = 1.1 + cos (2*pi*c(1:365)/365),
+              block = c(rep(2,183), rep(.1,182)))
   VC = VC/mean(VC)
+  VC = VC/VCes
   VCrel = rep(VC, Nyr)
   
-  if(showit == TRUE){
-    plot(1:(365*Nyr)/365, VCrel, type = "l", xlab = "Year", 
+  if(showit == TRUE)
+    plot(1:(365*Nyr)/365, VCrel, type = "l", xlab = "Year",
          ylim = c(0, max(VCrel)), ylab = "Seasonal Pattern")
-  }
-    
-  return(VCrel)
+  VCrel
+}
+
+makeVCes = function(pattern = "sig", maxES = 10, timing=0){
+  tt = 1:365
+  VCes = switch(pattern,
+                sig = 1+maxES*(exp(-.02*tt)/(1+exp(-.02*tt))),
+                block = c(rep(maxES, 180), rep(1, 180)),
+                rep(1,365)
+  )
+  c(VCes, VCes)[365+tt-timing]
 }
 
 # sparse_seasonal_input = function(file)
@@ -215,7 +219,6 @@ nextGenSeas = function(gen, Rtime, VCrel,norm=FALSE){
 
 nextGenSeasMat = function(gen, Rtime, VCrel, Nyr, NN=40, norm=FALSE, showit=TRUE){
   for(i in 1:NN){
-    genN = c(0,1, rep(0,3648))
     genN = nextGenSeas(genN, Rtime, VCrel, norm)
     gen = rbind(gen, genN)
   }
@@ -242,4 +245,8 @@ generationsPlot = function(gen, Nyr, VCrel, col_vector = global_col_vector){
     if(i%%5 == 1) text(xpos, ypos, i-1, pos=3)
   }
   lines(tt, .8*max(tot)*VCrel/max(VCrel), col = grey(0.55))
+}
+
+intervention = function(start_month, duration) {
+  
 }

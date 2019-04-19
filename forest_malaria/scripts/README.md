@@ -1,8 +1,3 @@
----
-title: Forest Model Code Overview
-tags: [Notebooks/Quick Notes]
----
-
 # Forest Model Code Overview
 
 ## Overview

@@ -24,15 +24,15 @@ library(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
 #
 ###################################
 
-p <- 0.5
+p <- 0.2
 
 R_v_min <- 0
 R_v_max <- 3
-R_v_step_size <- 0.05
+R_v_step_size <- 0.03
 
 R_f_min <- 0
 R_f_max <- 3
-R_f_step_size <- 0.05
+R_f_step_size <- 0.03
 
 make_surface <- T
 make_binary_heatmap <- T
@@ -189,7 +189,7 @@ if (make_binary_heatmap) {
                      y = results$R_0_f,
                      z = results$theta_v_binary,
                      type = "heatmap",
-                     colors = colorRamp(c("green", "red")),
+                     colors = colorRamp(c("#56B4E9", "#D55E00")),
                      height = 800, width = 960) %>%
     layout(title = paste0("Equilibrium Prevalence in Village as a Function of R in Village and Forest      p = ", p),
            titlefont = list(size = 16),
@@ -207,7 +207,7 @@ if (make_continuous_heatmap) {
                      y = results$R_0_f,
                      z = results$theta_v,
                      type = "heatmap",
-                     colors = colorRamp(c("green", "red")),
+                     colors = colorRamp(c("#56B4E9", "#D55E00")),
                      height = 800, width = 960) %>%
     layout(title = paste0("Equilibrium Prevalence in Village as a Function of R in Village and Forest      p = ", p),
            titlefont = list(size = 16),

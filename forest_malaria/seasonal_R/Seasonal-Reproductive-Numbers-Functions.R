@@ -219,7 +219,8 @@ nextGenSeas = function(gen, Rtime, VCrel,norm=FALSE){
 
 nextGenSeasMat = function(gen, Rtime, VCrel, Nyr, NN=40, norm=FALSE, showit=TRUE){
   for(i in 1:NN){
-    genN = nextGenSeas(genN, Rtime, VCrel, norm)
+    # genN = nextGenSeas(genN, Rtime, VCrel, norm)
+    genN = nextGenSeas(gen, Rtime, VCrel, norm)
     gen = rbind(gen, genN)
   }
   if(showit==TRUE) generationsPlot(gen, Nyr, VCrel)

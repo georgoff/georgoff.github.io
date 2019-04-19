@@ -1,37 +1,28 @@
+################################################
+# Author: Alec Georgoff
+#
+# Date: 4/17/19
+#
+# Purpose: Begin cleaning and exploring GPS
+#          logger data from Lao PDR study
+################################################
+
 # Initialization
 rm(list = ls())
 
-on_cluster <- T
-local <- F
+# IMPORTANT: replace this with the directory that contains the GPS data:
+data_dir <- "H:/georgoff.github.io/forest_malaria/laoPDR_GPS/"
 
 list.of.packages <- c("geosphere", "data.table", "animation", "ggplot2", "ggmap")
 
-if(local) {
-  new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-  if(length(new.packages)) install.packages(new.packages)
-  
-  require(data.table)
-  require(geosphere)
-  require(animation)
-  require(ggplot2)
-  require(ggmap)
-  
-  data_dir <- "H:/georgoff.github.io/forest_malaria/laoPDR_GPS/"
-}
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
 
-if(on_cluster) {
-  new.packages <- list.of.packages[!(list.of.packages %in% installed.packages(lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")[,"Package"])]
-  if(length(new.packages)) install.packages(new.packages, lib = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  
-  require(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(geosphere, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(animation, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  require(ggmap, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-  
-  data_dir <- "/homes/georgoff/georgoff.github.io/forest_malaria/laoPDR_GPS/"
-}
-
+library(data.table)
+library(geosphere)
+library(animation)
+library(ggplot2)
+library(ggmap)
 
 # read in data
 load(paste0(data_dir, "GPS_HRP_1st_Cycle_clean.RData"))
@@ -40,22 +31,18 @@ data1 <- as.data.table(GPS_HRP_1st_Cycle_clean)
 data2 <- as.data.table(GPS_HRP_2nd_Cycle_clean)
 data <- rbind(data1, data2)
 
-# select logger to track
-names(data)[6] <- "gps_logger"
+# select logger(s) to track
 logger <- c(30)
+
+names(data)[6] <- "gps_logger"
 data <- data[gps_logger %in% logger]
 
 # sort by time
 data <- data[order(time),]
 
-# for(i in 2:nrow(data)) {
-#   data[i, time_int := data[i, time] - data[i-1, time]]
-#   # print(data[i, time] - data[i-1, time])
-# }
-
 # EXPLORE NON-LOGGED POINTS
 
-
+# didn't get to this
 
 
 # FILTER OUT "BOGUS" GPS READINGS
@@ -84,7 +71,8 @@ for(i in 1:nrow(data)) {
   }
 }
 
-# map <- get_map(location = c(lon = min(data$lon), lat = max(data$lat)))
+# PLOT GPS DATA POINTS ON MAP
+# note: get_map() requires an API key from Google. See ?register_google() for details
 
 map <- get_map(location = c(left = min(data$lon), bottom = min(data$lat),
                             right = max(data$lon), top = max(data$lat)),
@@ -97,10 +85,9 @@ plot <- ggmap(map) +
 
 plot
 
-# data[, flagged := FALSE]
-# data[dist_around < 0.01 & dist_back > 0.01, flagged := TRUE]
-
 # DEFINE "ZONES"
+
+# NOTE: I didn't actually get this to work, but it could serve as a starting point
 
 ## assume that, if a certain number of readings are within a certain distance of
 ## each other, the person is in a "zone"
@@ -137,16 +124,21 @@ for(i in (1+duration_thres):nrow(data)) {
 
 data$group <- as.factor(data$group)
 
-plot_groups <- ggmap(map) +
-  geom_point(data = data[1:100], aes(x = lon, y = lat, colour = group))
+map_groups <- get_map(location = c(left = min(data$lon), bottom = min(data$lat),
+                            right = max(data$lon), top = max(data$lat)),
+               maptype = "hybrid")
+
+plot_groups <- ggmap(map_groups) +
+  geom_point(data = data, aes(x = lon, y = lat, colour = group))
 
 plot_groups
 
 # alternative: pick a time duration. person must stay within distance threshold
-# for that long
+# for that long (I didn't implement this, just an idea)
 
 
-
+# I tried to subset the data to just movements that were over a certain distance threshold,
+# to figure out larger-scale movement patterns. It doesn't work correctly yet
 data_long_move <- data[dist_back > 1000,]
 
 map_long_move <- get_map(location = c(left = min(data_long_move$lon), bottom = min(data_long_move$lat),
@@ -157,16 +149,3 @@ plot_long_move <- ggmap(map_long_move) +
   geom_point(data = data_long_move, aes(x = lon, y = lat, colour = gps_logger))
 
 plot_long_move
-
-
-saveHTML(expr = {
-  # plot(data[, lat], data[, lon], type = "n")
-  for(i in seq(1, nrow(data_long_move), by = 1)) {
-    plot(data_long_move[1:i, lat], data_long_move[1:i, lon],
-         xlim = c(min(data[, lat]), max(data[, lat])),
-         ylim = c(min(data[, lon]), max(data[, lon])),
-         type = "l")
-    ani.pause(0.05)
-  }
-},
-img.name = "test_animation")

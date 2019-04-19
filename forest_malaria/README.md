@@ -12,29 +12,29 @@ Directory for storing copies of manuscripts in progress.
 #### `/forest-app`
 Contains an R script that creates a Shiny app for running the forest model interactively.
 
-#### `inputs`
+#### `/inputs`
 Input files that are needed to run the forest malaria model.
 
-#### `laoPDR_GPS`
+#### `/laoPDR_GPS`
 Files related to data analysis of Lao PDR GPS data loggers used by Francois Rerolle and UCSF team. Actual data files have been removed from public repository.
 
-#### `notes`
+#### `/notes`
 Various notes from forest malaria work.
 
-#### `oxford`
+#### `/oxford`
 Files related to time spent collaborating with Malaria Atlas Project (MAP) at Oxford University.
 
-#### `papers`
+#### `/papers`
 Reference papers related for forest malaria.
 
-#### `presentations`
+#### `/presentations`
 Copies of presentations given about forest malaria work.
 
-#### `scripts`
+#### `/scripts`
 R scripts that execute the forest malaria time-at-risk model.
 
-#### `seasonality`
+#### `/seasonality`
 Files related to the seasonality work being developed by Dave Smith.
 
-#### `visualizations`
+#### `/visualizations`
 Visualizations used to interpret the results of the forest malaria model.

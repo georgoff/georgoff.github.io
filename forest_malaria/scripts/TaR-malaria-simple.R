@@ -11,12 +11,12 @@ rm(list = ls())
 
 list.of.packages <- c("rootSolve", "data.table", "plotly", "ggplot2")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages, lib = "/ihme/malaria_modeling/georgoff/Rlibs/")
+if(length(new.packages)) install.packages(new.packages)
 
-library(rootSolve, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-library(data.table, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-library(plotly, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
-library(ggplot2, lib.loc = "/ihme/malaria_modeling/georgoff/Rlibs/")
+library(rootSolve)
+library(data.table)
+library(plotly)
+library(ggplot2)
 
 ###################################
 #

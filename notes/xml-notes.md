@@ -31,13 +31,15 @@ Here's an example:
 - An `attribute` is a name-value pair inside the starting `tag` of an `element`
    - In this example, `state` is an `attribute` of the `<city>` `element`
 
-### Invalid, valid, and well-formed documents
+### Rules of XML
+
+#### Invalid, valid, and well-formed documents
 There are three kinds of XML documents:
 - **Invalid documents** don't follow the syntax rules defined by the XML specification.
 - **Valid documents** follow both the XML syntax rules and the rules defined in their DTD or schema.
 - **Well-formed documents** follow the XML syntax rules but don't have a DTD or schema.
 
-### The root element
+#### The root element
 An XML document must be contained in a single element: the **root element**
 
 Legal example:
@@ -51,5 +53,40 @@ Legal example:
 
 Illegal example:
 ```xml
-
+<?xml version="1.0"?>
+<!-- An invalid document -->
+<greeting>
+  Hello, World!
+</greeting>
+<greeting>
+  Hola, el Mundo!
+</greeting>
 ```
+
+#### Element's can't overlap
+Illegal example:
+```xml
+<!-- NOT legal XML markup -->
+<p>
+  <b>I <i>really
+  love</b> XML.
+  </i>
+</p>
+```
+
+Legal example:
+```xml
+<!-- legal XML markup -->
+<p>
+  <b>I <i>really
+  love</i></b>
+  <i>XML.</i>
+</p>
+```
+
+#### End tags are required
+Illegal example:
+```xml
+<!-- NOT legal XML markup -->
+<p>Yada yada yada...
+<p>

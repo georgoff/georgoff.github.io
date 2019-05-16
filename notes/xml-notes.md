@@ -175,6 +175,7 @@ In the above example, Cocoon looks for processing instructions that begin with `
 <!ENTITY dw "developerWorks">
 ```
 The above example defines an _entity_ for the document. Anywhere the XML processor finds the string `&dw;`, it replaces the entity with the string `developerWorks`. The XML spec also defines five entities you can use in place of various special characters:
+
 | entity | character | written meaning |
 | :---: | :---: | :---: |
 | `&lt;` | `<` | less-than sign |

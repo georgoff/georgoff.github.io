@@ -183,3 +183,58 @@ The above example defines an _entity_ for the document. Anywhere the XML process
 | `&quot;` | `"` | double-quote |
 | `&apos;` | `'` | single-quote (apostrophe) |
 | `&amp;` | `&` | ampersand |
+
+##### Namespaces
+Elements are used to describe the data within them, but sometimes they can have multiple meanings. For example, `<title>` could refer to:
+- a person's courtesy title
+- the title of a book
+- the title to a piece of property
+How do you tell if a given `<title>` element refers to a person, a book, or a piece of property? With _namespaces_.
+
+To use a namespace, you define a _namespace prefix_ and map it to a particular string. Here's an example:
+```xml
+<?xml version="1.0"?>
+<customer_summary
+  xmlns:addr="http://www.xyz.com/addresses/"
+  xmlns:books="http://www.zyx.com/books/"
+  xmlns:mortgage="http://www.yyz.com/title/"
+>
+... <addr:name><title>Mrs.</title> ... </addr:name> ...
+... <books:title>Lord of the Rings</books:title> ...
+... <mortgage:title>NC2948-388-1983</mortgage:title> ...
+```
+
+In this example, the three namespace prefixes are `addr`, `books`, and `mortgage`. Notice that defining a namespace for a particular element means that all of its child elements belong to the same namespace. The first `<title>` element belongs to the `addr` namespace because its parent element, `<addr:Name>`, does.
+
+**The string in a namespace definition is just a string**. The only thing that's important about the namespace string is that it's unique; that's why most namespace definitions look like URLs. The XML parser does not go to `http://www.zyx.com/books/` to search for DTD or schema, it simply uses that text as a string.
+
+### Defining Document Content
+There are two ways of defining document content:
+- **Document Type Definition**, or **DTD**. A DTD defines:
+   - the elements that can appear in an XML document
+   - the order in which they can appear
+   - how they can be nested inside each other
+   - other basic details of XML document structure
+- **XML Schema**. A schema can define all of the document structures that you can put in a DTD, and it can also define data types and more complicated rules than a DTD can.
+
+#### Document Type Definitions
+A DTD allows you to specify the basic structure of an XML document. Here's an example:
+```xml
+<!-- address.dtd -->
+<!ELEMENT address (name, street, city, state, postal-code)>
+<!ELEMENT name (title? first-name, last-name)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT first-name (#PCDATA)>
+<!ELEMENT last-name (#PCDATA)>
+<!ELEMENT street (#PCDATA)>
+<!ELEMENT city (#PCDATA)>
+<!ELEMENT state (#PCDATA)>
+<!ELEMENT postal-code (#PCDATA)>
+```
+This DTD defines all of the elements used in the document. It defines three basic things:
+- An `<address>` elements contains a `<name>`, a `<street>`, a `<city>`, a `<state>`, and a `<postal-code>`
+   - All of those elements must appear, and they must appear in that order
+- A `<name>` element contains an optional `<title>` element (the question mark means the title is optional), followed by a `<first-name>` and a `<last-name>` element
+- All of the other elements contain text
+   - `#PCDATA` stands for parsed character data; you can't include another element in these elements
+

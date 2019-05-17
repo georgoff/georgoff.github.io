@@ -7,6 +7,7 @@
 ## Methods & Technologies
 ### Spotify
 [Spotify Web API](https://developer.spotify.com/documentation/web-api/quick-start/)
+
 [Python Wrapper for Spotify API](https://github.com/plamere/spotipy)
 
 [XML Introduction](https://www.ibm.com/developerworks/xml/tutorials/xmlintro/xmlintro.html)

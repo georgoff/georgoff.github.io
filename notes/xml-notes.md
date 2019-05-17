@@ -222,7 +222,7 @@ A DTD allows you to specify the basic structure of an XML document. Here's an ex
 ```xml
 <!-- address.dtd -->
 <!ELEMENT address (name, street, city, state, postal-code)>
-<!ELEMENT name (title? first-name, last-name)>
+<!ELEMENT name (title?, first-name, last-name)>
 <!ELEMENT title (#PCDATA)>
 <!ELEMENT first-name (#PCDATA)>
 <!ELEMENT last-name (#PCDATA)>
@@ -238,3 +238,31 @@ This DTD defines all of the elements used in the document. It defines three basi
 - All of the other elements contain text
    - `#PCDATA` stands for parsed character data; you can't include another element in these elements
 
+The DTD makes it clear what combinations of elements are legal. An address document that has a `<postal-code>` element before the `<state>` element isn't legal, and neither is one that has no `<last-name>` element.
+
+Note that **DTD syntax is different from ordinary XML syntax.**
+
+##### Symbols in DTDs
+There are a few symbols used in DTDs to indicate how often (or whether) something may appear in an XML document
+- **Comma** (`,`) - indicates a list of items
+   - Example: `<!ELEMENT address (name, city, state)>`
+      - The `<address>` element must contain a `<name>`, a `<city>`, and a `<state>` element, in that order
+      - All of the elements are required
+- **Question Mark** (`?`) - indicates that an item is optional; it can appear once or not at all
+   - Example: `<!ELEMENT name (title?, first-name, last-name)>`
+      - The `<name>` element contains an optional `<title>` element, followed by a mandatory `<first-name>` and a `<last-name>` element
+- **Plus Sign** (`+`) - indicates that an item must appear at least once, but can appear any number of times
+   - Example: `<!ELEMENT addressbook (address+)>`
+      - An `<addressbook>` element contains one or more `<address>` elements
+      - You can have as many `<address>` elements as you need, but there has to be at least one
+- **Asterisk** (`*`) - indicates that an item can appear any number of times, including zero
+   - Example: `<!ELEMENT private-addresses (address*)>`
+      - A `<private-addresses>` element contains zero or more `<address>` elements
+- **Vertical Bar** (`|`) - indicates a list of choices; you can choose only one item from the list
+   - Example: `<!ELEMENT name (title?, first-name, (middle-initial | middle-name)?, last-name)>`
+      - A `<name>` element contains an optional `<title>` element, followed by a `<first-name>` element, possibly followed by either a `<middle-initial>` or a `<middle-name>` element, followed by a `<last-name>` element
+      - Both `<middle-initial>` and `<middle-name>` are optional, and you can have only one of the two
+   - Example: `<!ELEMENT name ((title?, first-name, last-name) | (surname, mothers-name, given-name))>`
+      - The `<name>` element can contain one of two sequences:
+        - An optional `<title>`, followed by a `<first-name>` and a `<last-name>`
+        - A `<surname>`, a `<mothers-name>`, and a `<given-name>`

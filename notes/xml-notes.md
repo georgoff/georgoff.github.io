@@ -266,3 +266,34 @@ There are a few symbols used in DTDs to indicate how often (or whether) somethin
       - The `<name>` element can contain one of two sequences:
         - An optional `<title>`, followed by a `<first-name>` and a `<last-name>`
         - A `<surname>`, a `<mothers-name>`, and a `<given-name>`
+
+##### Defining Attributes
+You can define attributes for the elements that will appear in your XML document. Using a DTD, you can also:
+- Define which attributes are required
+- Define default values for attributes
+- List all of the valid values for a given attribute
+
+Example:
+```xml
+<!ELEMENT city (#PCDATA)>
+<!ATTLIST city state CDATA #REQUIRED>
+```
+
+The `ATTLIST` declaration _lists the attributes_ of the element. The name `city` inside the attribute list tells the parser that these attributes are defined for the `<city>` element.
+
+The name `state` is the name of the attribute, and the keywords `CDATA` and `#REQUIRED` tell the parser that the `state` attribute contains text and is required (if it's optional, `CDATA #IMPLIED` will do the trick).
+
+To define multiple attributes for an element:
+```xml
+<!ELEMENT city (#PCDATA)>
+<!ATTLIST city state CDATA #REQUIRED
+               postal-code CDATA #REQUIRED>
+```
+
+Finally, DTDs allow you to define default values for attributes and enumerate all of the valid values for an attribute:
+```xml
+<!ELEMENT city (#PCDATA)>
+<!ATTLIST city state CDATA (AZ|CA|NV|OR|UT|WA) "CA">
+```
+
+In this example, the default state is California.

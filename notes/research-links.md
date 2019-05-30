@@ -16,4 +16,14 @@
 
 [Python Wrapper for Spotify API](https://github.com/plamere/spotipy)
 
+***
+
+### XML
+
 [XML Introduction](https://www.ibm.com/developerworks/xml/tutorials/xmlintro/xmlintro.html)
+
+***
+
+### Other
+
+[Processing](https://processing.org/)
